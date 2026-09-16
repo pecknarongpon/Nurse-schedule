@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ตารางเวร ณรงค์พล มั่นคง วิสัญญีพยาบาล</title>
+    <!-- โค้ดสำหรับไอคอนบนหน้าจอ iPhone -->
     <link rel="apple-touch-icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -27,57 +28,83 @@
         }
         body { 
             background-color: var(--bg);
+        }
+
+        /* 1. ส่วน Header: ใช้ฟอนต์แนบ, ใหญ่ขึ้น 10 เท่า, ระยะห่างบรรทัดแคบมากๆ */
+        .custom-header-font {
             font-family: 'MixedFruit', sans-serif !important;
+            font-size: 10rem !important; /* ใหญ่ขึ้น 10 เท่า */
+            line-height: 0.8 !important; /* ระยะห่างระหว่างบรรทัดแคบมากๆ */
+        }
+        /* ปรับขนาดตัวเลขเงินในกล่องสรุป Header ให้สอดคล้องกับความใหญ่ */
+        .custom-header-font .income-value {
+            font-size: 12rem !important;
+        }
+
+        /* 3. ส่วนรายละเอียด (Tables): ใช้ฟอนต์แนบ, ใหญ่ขึ้น 5 เท่า, ระยะห่างตารางแคบลง */
+        .custom-detail-section {
+            font-family: 'MixedFruit', sans-serif !important;
+        }
+        .custom-detail-section h3 {
+            font-size: 5rem !important; /* ใหญ่ขึ้น 5 เท่า */
+            line-height: 1.1 !important;
+        }
+        .custom-detail-table th, 
+        .custom-detail-table td {
+            font-size: 4rem !important; /* ใหญ่ขึ้น 5 เท่า */
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            line-height: 1.1 !important;
         }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
-    <div class="max-w-md sm:max-w-5xl mx-auto p-3 sm:p-6 pb-12">
-        <!-- Header: ลดความกว้างกรอบและบีบระยะห่างระหว่างบรรทัดให้แคบลง -->
-        <header class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 mb-6 max-w-sm sm:max-w-none mx-auto">
-            <div class="text-center mb-4 space-y-1">
-                <h1 class="text-4xl sm:text-7xl font-bold text-sky-700 leading-tight">
+    <div class="max-w-5xl mx-auto p-4 sm:p-6 pb-12">
+        <!-- Header: กำหนดให้ใช้ฟอนต์ใหม่ + ใหญ่ 10 เท่า + บรรทัดแคบสุดๆ -->
+        <header class="bg-white rounded-2xl shadow-sm p-6 mb-6 custom-header-font">
+            <div class="text-center mb-6">
+                <h1 class="font-bold text-sky-700 mb-1" style="font-size: 11rem;">
                     🗓️ ตารางเวร | Anesthesia
                 </h1>
-                <p class="text-3xl sm:text-6xl font-bold text-slate-700 leading-tight">
+                <p class="font-bold text-slate-700" style="font-size: 10rem;">
                     🩺 ณรงค์พล มั่นคง
                 </p>
-                <p class="text-xl sm:text-4xl font-medium text-slate-500 leading-tight">
+                <p class="font-light text-slate-500" style="font-size: 8rem;">
                     💉 วิสัญญีพยาบาล
                 </p>
             </div>
 
-            <!-- Summary Cards: ปรับให้เรียงแนวตั้งและกระชับในมือถือ -->
-            <div class="flex flex-col gap-3 mb-3">
-                <div class="bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-xl p-3 text-center shadow-sm max-w-xs mx-auto w-full">
-                    <div class="text-lg text-amber-800 font-bold mb-0.5">💰 รายได้เวรทำการ</div>
-                    <div id="regular-income" class="text-5xl sm:text-8xl font-bold text-amber-900 leading-tight">0 บาท</div>
+            <!-- 3 Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-xl p-4 text-center shadow-sm">
+                    <div class="text-amber-800 font-medium" style="font-size: 6rem;">รายได้เวรทำการ</div>
+                    <div id="regular-income" class="font-bold text-amber-900 income-value">0 บาท</div>
                 </div>
-                <div class="bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 rounded-xl p-3 text-center shadow-sm max-w-xs mx-auto w-full">
-                    <div class="text-lg text-slate-700 font-bold mb-0.5">💰 รายได้เวร Colonoscope</div>
-                    <div id="colo-income" class="text-5xl sm:text-8xl font-bold text-slate-900 leading-tight">0 บาท</div>
+                <div class="bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 rounded-xl p-4 text-center shadow-sm">
+                    <div class="text-slate-700 font-medium" style="font-size: 6rem;">รายได้เวร Colonoscope</div>
+                    <div id="colo-income" class="font-bold text-slate-900 income-value">0 บาท</div>
                 </div>
             </div>
-            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center shadow-sm max-w-xs mx-auto w-full">
-                <div class="text-xl text-emerald-700 font-bold mb-0.5">💎 รายได้รวมทั้งสิ้น</div>
-                <div id="total-income" class="text-6xl sm:text-9xl font-bold text-emerald-800 leading-tight">0 บาท</div>
+            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center shadow-sm">
+                <div class="text-emerald-700 font-medium" style="font-size: 6rem;">รายได้รวม</div>
+                <div id="total-income" class="font-bold text-emerald-800 income-value" style="font-size: 14rem;">0 บาท</div>
             </div>
         </header>
 
-        <!-- Month Navigation & Controls (กลับมาใช้ดีไซน์และฟอนต์เดิม) -->
+        <!-- Month Navigation & Controls (คงเดิม) -->
         <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold text-base">&lt;</button>
-                <h2 id="month-year-display" class="text-base font-bold text-slate-700 min-w-[140px] text-center">มกราคม 2569</h2>
-                <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold text-base">&gt;</button>
+                <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&lt;</button>
+                <h2 id="month-year-display" class="text-lg font-semibold text-slate-700 min-w-[180px] text-center">มกราคม 2569</h2>
+                <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&gt;</button>
             </div>
-            <button onclick="goToCurrentMonth()" class="text-xs bg-sky-100 text-sky-700 px-3 py-1.5 rounded-xl font-bold hover:bg-sky-200 transition">เดือนปัจจุบัน</button>
+            <button onclick="goToCurrentMonth()" class="text-sm bg-sky-100 text-sky-700 px-4 py-2 rounded-xl font-medium hover:bg-sky-200 transition">เดือนปัจจุบัน</button>
         </div>
 
-        <!-- Calendar Grid (กลับมาใช้ฟอนต์และขนาดเดิมแบบรูปที่ 2) -->
+        <!-- Calendar Grid (คงเดิม 100% ทั้งฟอนต์และขนาด) -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
-            <div class="grid grid-cols-7 bg-slate-100 text-center text-xs font-bold text-slate-600 py-2 border-b border-slate-200">
+            <div class="grid grid-cols-7 bg-slate-100 text-center text-xs font-semibold text-slate-600 py-3 border-b border-slate-200">
                 <span class="text-red-500">อา.</span>
                 <span>จ.</span>
                 <span>อ.</span>
@@ -89,87 +116,87 @@
             <div id="calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px"></div>
         </div>
 
-        <!-- Detailed Summary Tables: ฟอนต์ใหญ่ x5 และช่องตารางแคบลง -->
-        <div class="space-y-6">
+        <!-- Detailed Summary Tables: ใช้ฟอนต์แนบ, ใหญ่ขึ้น 5 เท่า, ระยะห่างแคบลง -->
+        <div class="space-y-6 custom-detail-section">
             <!-- Part 1: เวรทำการ -->
-            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 overflow-x-auto">
-                <h3 class="text-2xl sm:text-3xl font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <span>📊</span> รายละเอียด : เวรทำการ
                 </h3>
-                <table class="w-full text-left border-collapse min-w-[650px]">
+                <table class="w-full text-left border-collapse min-w-[650px] custom-detail-table">
                     <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xl">
-                            <th class="py-1.5 px-2 font-bold w-1/6">รายการ</th>
-                            <th class="py-1.5 px-2 font-bold w-1/6 text-center">จำนวนรวม</th>
-                            <th class="py-1.5 px-2 font-bold w-1/6 text-center">ราคารวม (บาท)</th>
-                            <th class="py-1.5 px-2 font-bold w-1/2">วันที่เข้าเงื่อนไข</th>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                            <th class="p-2 font-semibold w-1/6">รายการ</th>
+                            <th class="p-2 font-semibold w-1/6 text-center">จำนวนรวม</th>
+                            <th class="p-2 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
+                            <th class="p-2 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
                         </tr>
                     </thead>
-                    <tbody id="summary-table-regular" class="divide-y divide-slate-100 text-2xl"></tbody>
+                    <tbody id="summary-table-regular" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
 
             <!-- Part 2: เวร Colonoscope -->
-            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 overflow-x-auto">
-                <h3 class="text-2xl sm:text-3xl font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <span>📊</span> รายละเอียด : เวร Colonoscope
                 </h3>
-                <table class="w-full text-left border-collapse min-w-[650px]">
+                <table class="w-full text-left border-collapse min-w-[650px] custom-detail-table">
                     <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xl">
-                            <th class="py-1.5 px-2 font-bold w-1/6">รายการ</th>
-                            <th class="py-1.5 px-2 font-bold w-1/6 text-center">จำนวนรวม</th>
-                            <th class="py-1.5 px-2 font-bold w-1/6 text-center">ราคารวม (บาท)</th>
-                            <th class="py-1.5 px-2 font-bold w-1/2">วันที่เข้าเงื่อนไข</th>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                            <th class="p-2 font-semibold w-1/6">รายการ</th>
+                            <th class="p-2 font-semibold w-1/6 text-center">จำนวนรวม</th>
+                            <th class="p-2 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
+                            <th class="p-2 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
                         </tr>
                     </thead>
-                    <tbody id="summary-table-colo" class="divide-y divide-slate-100 text-2xl"></tbody>
+                    <tbody id="summary-table-colo" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Modal for adding/editing shift (ขนาดและฟอนต์เดิม) -->
+    <!-- Modal for adding/editing shift -->
     <div id="shift-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-5 max-h-[90vh] overflow-y-auto">
-            <h3 id="modal-date-title" class="text-lg font-bold text-slate-800 mb-3">จัดการเวรประจำวัน</h3>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
+            <h3 id="modal-date-title" class="text-lg font-bold text-slate-800 mb-4">จัดการเวรประจำวัน</h3>
             
-            <div class="space-y-4">
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="space-y-5">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <label class="block text-sm font-bold text-slate-700 mb-2">📌 เวร (เลือกได้มากกว่า 1)</label>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <label class="flex items-center gap-2 p-2 bg-sky-50 border border-sky-200 rounded-lg cursor-pointer hover:bg-sky-100 transition">
+                        <label class="flex items-center gap-2 p-2.5 bg-sky-50 border border-sky-200 rounded-lg cursor-pointer hover:bg-sky-100 transition">
                             <input type="checkbox" name="shift-option" value="เช้า" onchange="handleShiftSelectionChange()" class="rounded text-sky-600 focus:ring-sky-500">
-                            <span class="text-xs font-bold text-sky-800">เช้า</span>
+                            <span class="text-xs font-semibold text-sky-800">เช้า</span>
                         </label>
-                        <label class="flex items-center gap-2 p-2 bg-pink-50 border border-pink-200 rounded-lg cursor-pointer hover:bg-pink-100 transition">
+                        <label class="flex items-center gap-2 p-2.5 bg-pink-50 border border-pink-200 rounded-lg cursor-pointer hover:bg-pink-100 transition">
                             <input type="checkbox" name="shift-option" value="บ่าย" onchange="handleShiftSelectionChange()" class="rounded text-pink-600 focus:ring-pink-500">
-                            <span class="text-xs font-bold text-pink-800">บ่าย</span>
+                            <span class="text-xs font-semibold text-pink-800">บ่าย</span>
                         </label>
-                        <label class="flex items-center gap-2 p-2 bg-slate-200 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-300 transition">
+                        <label class="flex items-center gap-2 p-2.5 bg-slate-200 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-300 transition">
                             <input type="checkbox" name="shift-option" value="ดึก" onchange="handleShiftSelectionChange()" class="rounded text-slate-700 focus:ring-slate-500">
-                            <span class="text-xs font-bold text-slate-800">ดึก</span>
+                            <span class="text-xs font-semibold text-slate-800">ดึก</span>
                         </label>
-                        <label class="flex items-center gap-2 p-2 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition">
+                        <label class="flex items-center gap-2 p-2.5 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition">
                             <input type="checkbox" name="shift-option" value="Colonoscope" onchange="handleShiftSelectionChange()" class="rounded text-purple-600 focus:ring-purple-500">
-                            <span class="text-xs font-bold text-purple-800">Colonoscope</span>
+                            <span class="text-xs font-semibold text-purple-800">Colonoscope</span>
                         </label>
                     </div>
                 </div>
 
-                <div id="shift-incomes-container" class="space-y-3"></div>
+                <div id="shift-incomes-container" class="space-y-4"></div>
 
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-                    <span class="text-xs text-amber-800 font-bold">ผลรวมเงินรายวันของวันนี้: </span>
-                    <span id="preview-daily-total" class="text-base font-bold text-amber-900">0 บาท</span>
+                    <span class="text-xs text-amber-800 font-medium">ผลรวมเงินรายวันของวันนี้: </span>
+                    <span id="preview-daily-total" class="text-lg font-bold text-amber-900">0 บาท</span>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mt-5">
-                <button onclick="deleteShift()" class="text-rose-500 text-sm font-bold hover:underline">ลบข้อมูลวันนี้</button>
+            <div class="flex justify-between items-center mt-6">
+                <button onclick="deleteShift()" class="text-rose-500 text-sm font-medium hover:underline">ลบข้อมูลวันนี้</button>
                 <div class="flex gap-2">
-                    <button onclick="closeModal()" class="px-3 py-1.5 rounded-xl text-slate-600 text-sm hover:bg-slate-100 transition">ยกเลิก</button>
-                    <button onclick="saveShift()" class="px-4 py-1.5 rounded-xl bg-sky-600 text-white text-sm font-bold hover:bg-sky-700 transition shadow-sm">บันทึก</button>
+                    <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 text-sm hover:bg-slate-100 transition">ยกเลิก</button>
+                    <button onclick="saveShift()" class="px-5 py-2 rounded-xl bg-sky-600 text-white text-sm font-medium hover:bg-sky-700 transition shadow-sm">บันทึก</button>
                 </div>
             </div>
         </div>
@@ -208,6 +235,9 @@
         }
 
         function calculateShiftIncome(item) {
+            let sName = item.shift;
+            let isObs = !!item.obs;
+            let isOncall = !!item.oncall;
             let mCount = parseInt(item.major) || 0;
             let miCount = parseInt(item.minor) || 0;
 
@@ -215,16 +245,23 @@
             let miTotal = miCount * 130;
             let sumMM = mTotal + miTotal;
 
+            let shiftOt = 0;
+            let activeM = 0;
+            let activeMi = 0;
             let adjustedMM = 0;
+
             if (sumMM > 0) {
                 if (sumMM < 710) {
+                    shiftOt = 1;
                     adjustedMM = 710;
                 } else {
+                    activeM = mCount;
+                    activeMi = miCount;
                     adjustedMM = sumMM;
                 }
             }
 
-            let shiftIncome = adjustedMM + (item.obs ? 88 : 0) + (item.oncall ? 142 : 0);
+            let shiftIncome = adjustedMM + (isObs ? 88 : 0) + (isOncall ? 142 : 0);
             return shiftIncome;
         }
 
@@ -251,7 +288,11 @@
             }
 
             const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4 };
-            shiftList.sort((a, b) => (shiftOrder[a.shift] || 99) - (shiftOrder[b.shift] || 99));
+            shiftList.sort((a, b) => {
+                let rankA = shiftOrder[a.shift] || 99;
+                let rankB = shiftOrder[b.shift] || 99;
+                return rankA - rankB;
+            });
 
             shiftList.forEach(item => {
                 let sName = item.shift;
@@ -314,7 +355,13 @@
                 });
             });
 
-            return { total: totalSum, regularTotal, coloTotal, blocks, detailsPerShift };
+            return {
+                total: totalSum,
+                regularTotal,
+                coloTotal,
+                blocks,
+                detailsPerShift
+            };
         }
 
         function renderCalendar() {
@@ -348,7 +395,7 @@
 
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = 'bg-slate-50 min-h-[110px] opacity-40';
+                emptyCell.className = 'bg-slate-50 min-h-[140px] opacity-40';
                 grid.appendChild(emptyCell);
             }
 
@@ -357,7 +404,7 @@
                 const dayData = shiftsData[dateStr];
 
                 const cell = document.createElement('div');
-                cell.className = 'bg-white min-h-[110px] p-1.5 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition relative';
+                cell.className = 'bg-white min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition relative';
                 cell.onclick = () => openModal(dateStr);
 
                 let shiftNames = [];
@@ -384,20 +431,52 @@
 
                     calcResult.detailsPerShift.forEach(ds => {
                         if (!ds.isColo) {
-                            if (ds.obs) { regularStats.obs.count += 1; regularStats.obs.total += 88; regularStats.obs.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.oncall) { regularStats.oncall.count += 1; regularStats.oncall.total += 142; regularStats.oncall.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.ot) { regularStats.ot.count += 1; regularStats.ot.total += 710; regularStats.ot.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.major > 0) { regularStats.major.count += ds.major; regularStats.major.total += (ds.major * 250); regularStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
-                            if (ds.minor > 0) { regularStats.minor.count += ds.minor; regularStats.minor.total += (ds.minor * 130); regularStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
+                            if (ds.obs) {
+                                regularStats.obs.count += 1;
+                                regularStats.obs.total += 88;
+                                regularStats.obs.entries.push(`${day}${ds.abbr}`);
+                            }
+                            if (ds.oncall) {
+                                regularStats.oncall.count += 1;
+                                regularStats.oncall.total += 142;
+                                regularStats.oncall.entries.push(`${day}${ds.abbr}`);
+                            }
+                            if (ds.ot) {
+                                regularStats.ot.count += 1;
+                                regularStats.ot.total += 710;
+                                regularStats.ot.entries.push(`${day}${ds.abbr}`);
+                            }
+                            if (ds.major > 0) {
+                                regularStats.major.count += ds.major;
+                                regularStats.major.total += (ds.major * 250);
+                                regularStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`);
+                            }
+                            if (ds.minor > 0) {
+                                regularStats.minor.count += ds.minor;
+                                regularStats.minor.total += (ds.minor * 130);
+                                regularStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`);
+                            }
                         } else {
-                            if (ds.ot) { coloStats.ot.count += 1; coloStats.ot.total += 710; coloStats.ot.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.major > 0) { coloStats.major.count += ds.major; coloStats.major.total += (ds.major * 250); coloStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
-                            if (ds.minor > 0) { coloStats.minor.count += ds.minor; coloStats.minor.total += (ds.minor * 130); coloStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
+                            if (ds.ot) {
+                                coloStats.ot.count += 1;
+                                coloStats.ot.total += 710;
+                                coloStats.ot.entries.push(`${day}${ds.abbr}`);
+                            }
+                            if (ds.major > 0) {
+                                coloStats.major.count += ds.major;
+                                coloStats.major.total += (ds.major * 250);
+                                coloStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`);
+                            }
+                            if (ds.minor > 0) {
+                                coloStats.minor.count += ds.minor;
+                                coloStats.minor.total += (ds.minor * 130);
+                                coloStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`);
+                            }
                         }
                     });
 
                     if (shiftNames.length > 0) {
-                        shiftBadgesHtml = '<div class="flex flex-wrap gap-0.5 mb-1">';
+                        shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mb-1">';
                         shiftNames.forEach(s => {
                             let badgeStyle = 'bg-slate-100 text-slate-800 border-slate-300';
                             let displayLabel = s;
@@ -408,7 +487,8 @@
                                 badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300';
                                 displayLabel = 'C';
                             }
-                            shiftBadgesHtml += `<span class="text-[10px] px-1 py-0.5 rounded border font-bold ${badgeStyle}">${displayLabel}</span>`;
+
+                            shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
                         shiftBadgesHtml += '</div>';
                     }
@@ -424,23 +504,24 @@
                             let blockInnerHtml = '';
                             blockLines.forEach((lineText, lIdx) => {
                                 if (lIdx === 0) {
-                                    blockInnerHtml += `<div class="font-bold text-[11px]">${lineText}</div>`;
+                                    blockInnerHtml += `<div class="font-bold text-[10px]">${lineText}</div>`;
                                 } else {
-                                    blockInnerHtml += `<div class="text-[10px] opacity-90">${lineText}</div>`;
+                                    blockInnerHtml += `<div class="text-[9px] opacity-90">${lineText}</div>`;
                                 }
                             });
+
                             if (bIdx > 0) {
-                                contentBlocksHtml += `<div class="border-t border-black/20 my-0.5 pt-0.5"></div>`;
+                                contentBlocksHtml += `<div class="border-t border-black/20 my-1 pt-1"></div>`;
                             }
                             contentBlocksHtml += `<div>${blockInnerHtml}</div>`;
                         });
 
                         incomeBoxHtml = `
-                            <div class="mt-1 p-1 rounded-lg border text-[11px] shadow-xs ${boxGradient}">
+                            <div class="mt-1 p-1.5 rounded-lg border text-[10px] shadow-xs ${boxGradient}">
                                 <div class="space-y-0.5">
                                     ${contentBlocksHtml}
                                 </div>
-                                <div class="border-t border-black/15 mt-0.5 pt-0.5 text-right font-bold text-[11px]">
+                                <div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">
                                     ${dailyTotal.toLocaleString()} บาท
                                 </div>
                             </div>
@@ -450,12 +531,16 @@
 
                 cell.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-center mb-0.5">
-                            <span class="text-xs font-bold text-slate-700">${day}</span>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-semibold text-slate-700">${day}</span>
                         </div>
-                        <div>${shiftBadgesHtml}</div>
+                        <div>
+                            ${shiftBadgesHtml}
+                        </div>
                     </div>
-                    <div class="mt-auto">${incomeBoxHtml}</div>
+                    <div class="mt-auto">
+                        ${incomeBoxHtml}
+                    </div>
                 `;
                 grid.appendChild(cell);
             }
@@ -473,18 +558,58 @@
 
             const tbodyReg = document.getElementById('summary-table-regular');
             tbodyReg.innerHTML = `
-                <tr><td class="py-1.5 px-2 font-bold text-slate-700">Obs</td><td class="py-1.5 px-2 text-center font-bold">${regularStats.obs.count}</td><td class="py-1.5 px-2 text-center font-bold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td><td class="py-1.5 px-2 text-slate-600 break-all">${formatEntries(regularStats.obs.entries)}</td></tr>
-                <tr><td class="py-1.5 px-2 font-bold text-slate-700">On Call</td><td class="py-1.5 px-2 text-center font-bold">${regularStats.oncall.count}</td><td class="py-1.5 px-2 text-center font-bold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td><td class="py-1.5 px-2 text-slate-600 break-all">${formatEntries(regularStats.oncall.entries)}</td></tr>
-                <tr><td class="py-1.5 px-2 font-bold text-slate-700">OT</td><td class="py-1.5 px-2 text-center font-bold">${regularStats.ot.count}</td><td class="py-1.5 px-2 text-center font-bold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td><td class="py-1.5 px-2 text-slate-600 break-all">${formatEntries(regularStats.ot.entries)}</td></tr>
-                <tr><td class="py-1.5 px-2 font-bold text-slate-700">Major</td><td class="py-1.5 px-2 text-center font-bold">${regularStats.major.count}</td><td class="py-1.5 px-2 text-center font-bold text-emerald-600">${regularStats.major.total.toLocaleString()}</td><td class="py-1.5 px-2 text-slate-600 break-all">${formatEntries(regularStats.major.entries)}</td></tr>
-                <tr><td class="py-1.5 px-2 font-bold text-slate-700">Minor</td><td class="py-1.5 px-2 text-center font-bold">${regularStats.minor.count}</td><td class="py-1.5 px-2 text-center font-bold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td><td class="py-1.5 px-2 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td></tr>
+                <tr>
+                    <td class="p-2 font-semibold text-slate-700">Obs</td>
+                    <td class="p-2 text-center font-medium">${regularStats.obs.count}</td>
+                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td>
+                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.obs.entries)}</td>
+                </tr>
+                <tr>
+                    <td class="p-2 font-semibold text-slate-700">On Call</td>
+                    <td class="p-2 text-center font-medium">${regularStats.oncall.count}</td>
+                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td>
+                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.oncall.entries)}</td>
+                </tr>
+                <tr>
+                    <td class="p-2 font-semibold text-slate-700">OT</td>
+                    <td class="p-2 text-center font-medium">${regularStats.ot.count}</td>
+                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td>
+                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.ot.entries)}</td>
+                </tr>
+                <tr>
+                    <td class="p-2 font-semibold text-slate-700">Major</td>
+                    <td class="p-2 text-center font-medium">${regularStats.major.count}</td>
+                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td>
+                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.major.entries)}</td>
+                </tr>
+                <tr>
+                    <td class="p-2 font-semibold text-slate-700">Minor</td>
+                    <td class="p-2 text-center font-medium">${regularStats.minor.count}</td>
+                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td>
+                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td>
+                </tr>
             `;
 
             const tbodyColo = document.getElementById('summary-table-colo');
             tbodyColo.innerHTML = `
-                <tr><td class="py-1.5 px-2 font-bold text-slate-700">OT</td><td class="py-1.5 px-2 text-center font-bold">${coloStats.ot.count}</td><td class="py-1.5 px-2 text-center font-bold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td><td class="py-1.5 px-2 text-slate-600 break-all">${formatEntries(coloStats.ot.entries)}</td></tr>
-                <tr><td class="py-1.5 px-2 font-bold text-slate-700">Major</td><td class="py-1.5 px-2 text-center font-bold">${coloStats.major.count}</td><td class="py-1.5 px-2 text-center font-bold text-emerald-600">${coloStats.major.total.toLocaleString()}</td><td class="py-1.5 px-2 text-slate-600 break-all">${formatEntries(coloStats.major.entries)}</td></tr>
-                <tr><td class="py-1.5 px-2 font-bold text-slate-700">Minor</td><td class="py-1.5 px-2 text-center font-bold">${coloStats.minor.count}</td><td class="py-1.5 px-2 text-center font-bold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td><td class="py-1.5 px-2 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td></tr>
+                <tr>
+                    <td class="p-2 font-semibold text-slate-700">OT</td>
+                    <td class="p-2 text-center font-medium">${coloStats.ot.count}</td>
+                    <td class="p-2 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td>
+                    <td class="p-2 text-slate-600 break-all">${formatEntries(coloStats.ot.entries)}</td>
+                </tr>
+                <tr>
+                    <td class="p-2 font-semibold text-slate-700">Major</td>
+                    <td class="p-2 text-center font-medium">${coloStats.major.count}</td>
+                    <td class="p-2 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td>
+                    <td class="p-2 text-slate-600 break-all">${formatEntries(coloStats.major.entries)}</td>
+                </tr>
+                <tr>
+                    <td class="p-2 font-semibold text-slate-700">Minor</td>
+                    <td class="p-2 text-center font-medium">${coloStats.minor.count}</td>
+                    <td class="p-2 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td>
+                    <td class="p-2 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td>
+                </tr>
             `;
         }
 
@@ -504,7 +629,19 @@
             document.getElementById('modal-date-title').innerText = `จัดการเวรวันที่ ${parseInt(parts[2])} ${monthNames[parseInt(parts[1])-1]} ${parseInt(parts[0])+543}`;
             
             const existing = shiftsData[dateStr] || { shiftDetails: [] };
-            let details = existing.shiftDetails || [];
+
+            let details = [];
+            if (existing.shiftDetails && Array.isArray(existing.shiftDetails)) {
+                details = existing.shiftDetails;
+            } else if (existing.shifts) {
+                details = existing.shifts.map(s => ({
+                    shift: s === 'C' ? 'Colonoscope' : s,
+                    obs: !!existing.obs,
+                    oncall: !!existing.oncall,
+                    major: existing.major || 0,
+                    minor: existing.minor || 0
+                }));
+            }
 
             const shiftCheckboxes = document.querySelectorAll('input[name="shift-option"]');
             shiftCheckboxes.forEach(cb => {
@@ -513,6 +650,7 @@
             });
 
             renderShiftIncomeInputs(details);
+
             document.getElementById('shift-modal').classList.remove('hidden');
             document.getElementById('shift-modal').classList.add('flex');
         }
@@ -550,44 +688,53 @@
                 else if (item.shift === 'Colonoscope') badgeBg = 'bg-purple-50 text-purple-800 border-purple-200';
 
                 const currentCalculatedIncome = calculateShiftIncome(item);
+
                 const div = document.createElement('div');
-                div.className = 'p-2.5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
+                div.className = 'p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
+                div.setAttribute('data-shift-card-index', index);
                 
                 let extraInputsHtml = '';
                 if (item.shift !== 'Colonoscope') {
                     extraInputsHtml = `
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="flex items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
-                                <input type="checkbox" data-shift-idx="${index}" data-field="obs" ${item.obs ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600">
-                                <div class="text-xs"><span class="font-bold text-slate-700">Obs</span> <span class="text-slate-500">(88฿)</span></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
+                                <input type="checkbox" data-shift-idx="${index}" data-field="obs" ${item.obs ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600 focus:ring-sky-500">
+                                <div class="text-xs">
+                                    <span class="font-semibold text-slate-700">Obs</span> 
+                                    <span class="text-slate-400">(88 ฿)</span>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
-                                <input type="checkbox" data-shift-idx="${index}" data-field="oncall" ${item.oncall ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600">
-                                <div class="text-xs"><span class="font-bold text-slate-700">On Call</span> <span class="text-slate-500">(142฿)</span></div>
+                            <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
+                                <input type="checkbox" data-shift-idx="${index}" data-field="oncall" ${item.oncall ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600 focus:ring-sky-500">
+                                <div class="text-xs">
+                                    <span class="font-semibold text-slate-700">On Call</span> 
+                                    <span class="text-slate-400">(142 ฿)</span>
+                                </div>
                             </label>
                         </div>
                     `;
                 }
 
                 div.innerHTML = `
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-1">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
                         <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
                         <span class="text-xs font-bold text-slate-700 shift-subtotal-display">${currentCalculatedIncome.toLocaleString()} บาท</span>
                     </div>
                     ${extraInputsHtml}
-                    <div class="grid grid-cols-2 gap-2 pt-0.5">
-                        <div class="bg-slate-50 p-1.5 border border-slate-200 rounded-lg">
-                            <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Major (250 ฿)</label>
-                            <input type="number" data-shift-idx="${index}" data-field="major" min="0" placeholder="" value="${item.major || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center font-bold focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
+                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">Major (250 ฿)</label>
+                            <input type="number" data-shift-idx="${index}" data-field="major" min="0" placeholder="" value="${item.major !== undefined && item.major !== 0 ? item.major : ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:ring-1 focus:ring-sky-500 focus:outline-none">
                         </div>
-                        <div class="bg-slate-50 p-1.5 border border-slate-200 rounded-lg">
-                            <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Minor (130 ฿)</label>
-                            <input type="number" data-shift-idx="${index}" data-field="minor" min="0" placeholder="" value="${item.minor || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center font-bold focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                        <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
+                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">Minor (130 ฿)</label>
+                            <input type="number" data-shift-idx="${index}" data-field="minor" min="0" placeholder="" value="${item.minor !== undefined && item.minor !== 0 ? item.minor : ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:ring-1 focus:ring-sky-500 focus:outline-none">
                         </div>
                     </div>
                 `;
                 container.appendChild(div);
             });
+
             updatePreviewTotal();
         }
 
@@ -613,8 +760,11 @@
 
                 const subtotal = calculateShiftIncome(tempItem);
                 const subtotalDisplay = div.querySelector('.shift-subtotal-display');
-                if (subtotalDisplay) subtotalDisplay.innerText = `${subtotal.toLocaleString()} บาท`;
+                if (subtotalDisplay) {
+                    subtotalDisplay.innerText = `${subtotal.toLocaleString()} บาท`;
+                }
             });
+
             updatePreviewTotal();
         }
 
@@ -646,12 +796,14 @@
                     details.push({ shift: cb.value, obs: false, oncall: false, major: 0, minor: 0 });
                 });
             }
+
             return details;
         }
 
         function updatePreviewTotal() {
             const details = gatherModalDetailsFromUI();
-            const res = calculateDayDetails({ shiftDetails: details });
+            const tempSimData = { shiftDetails: details };
+            const res = calculateDayDetails(tempSimData);
             document.getElementById('preview-daily-total').innerText = `${res.total.toLocaleString()} บาท`;
         }
 
@@ -663,6 +815,7 @@
 
         function saveShift() {
             if (!selectedDateStr) return;
+
             const details = gatherModalDetailsFromUI();
             let hasData = details.length > 0 && details.some(d => d.shift || d.obs || d.oncall || d.major > 0 || d.minor > 0);
 
