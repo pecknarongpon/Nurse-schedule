@@ -8,6 +8,13 @@
     <link rel="apple-touch-icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @font-face {
+            font-family: 'MixedFruit';
+            src: url('FH%20Mixed%20Fruit%20Thin.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         :root {
             --bg: #f8fafc;
         }
@@ -19,7 +26,10 @@
         :root[data-theme="dark"] {
             --bg: #0f172a;
         }
-        body { background-color: var(--bg); }
+        body { 
+            background-color: var(--bg);
+            font-family: 'MixedFruit', sans-serif !important;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
