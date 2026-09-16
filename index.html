@@ -1,3 +1,5 @@
+นี่คือโค้ด HTML ตัวเต็มแบบรวมโค้ดเว็บแอปตารางเวรและโค้ดสำหรับใส่ไอคอนแอป (Apple Touch Icon) ไว้ด้วยกันเรียบร้อยแล้วครับ คุณสามารถคัดลอกโค้ดชุดนี้ไปวางทับในไฟล์ index.html บน GitHub ของคุณได้เลย
+โดยผมได้เพิ่มโค้ดบรรทัด <link rel="apple-touch-icon" href="icon.png"> ไว้ให้ในส่วน <head> เรียบร้อยแล้ว (แนะนำให้ตั้งชื่อไฟล์รูปไอคอนของคุณบน GitHub เป็น icon.png ตามที่ตั้งค่าไว้ในโค้ดครับ)
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -8,13 +10,6 @@
     <link rel="apple-touch-icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @font-face {
-            font-family: 'MixedFruit';
-            src: url('font.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
-
         :root {
             --bg: #f8fafc;
         }
@@ -26,51 +21,22 @@
         :root[data-theme="dark"] {
             --bg: #0f172a;
         }
-        body { 
-            background-color: var(--bg);
-        }
-
-        /* 1. ส่วน Header: ใช้ฟอนต์แนบ, ใหญ่ขึ้น 10 เท่า, ระยะห่างบรรทัดแคบมากๆ */
-        .custom-header-font {
-            font-family: 'MixedFruit', sans-serif !important;
-            font-size: 10rem !important; /* ใหญ่ขึ้น 10 เท่า */
-            line-height: 0.8 !important; /* ระยะห่างระหว่างบรรทัดแคบมากๆ */
-        }
-        /* ปรับขนาดตัวเลขเงินในกล่องสรุป Header ให้สอดคล้องกับความใหญ่ */
-        .custom-header-font .income-value {
-            font-size: 12rem !important;
-        }
-
-        /* 3. ส่วนรายละเอียด (Tables): ใช้ฟอนต์แนบ, ใหญ่ขึ้น 5 เท่า, ระยะห่างตารางแคบลง */
-        .custom-detail-section {
-            font-family: 'MixedFruit', sans-serif !important;
-        }
-        .custom-detail-section h3 {
-            font-size: 5rem !important; /* ใหญ่ขึ้น 5 เท่า */
-            line-height: 1.1 !important;
-        }
-        .custom-detail-table th, 
-        .custom-detail-table td {
-            font-size: 4rem !important; /* ใหญ่ขึ้น 5 เท่า */
-            padding-top: 4px !important;
-            padding-bottom: 4px !important;
-            line-height: 1.1 !important;
-        }
+        body { background-color: var(--bg); }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
     <div class="max-w-5xl mx-auto p-4 sm:p-6 pb-12">
-        <!-- Header: กำหนดให้ใช้ฟอนต์ใหม่ + ใหญ่ 10 เท่า + บรรทัดแคบสุดๆ -->
-        <header class="bg-white rounded-2xl shadow-sm p-6 mb-6 custom-header-font">
+        <!-- Header -->
+        <header class="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <div class="text-center mb-6">
-                <h1 class="font-bold text-sky-700 mb-1" style="font-size: 11rem;">
+                <h1 class="text-2xl font-bold text-sky-700 mb-1">
                     🗓️ ตารางเวร | Anesthesia
                 </h1>
-                <p class="font-bold text-slate-700" style="font-size: 10rem;">
+                <p class="text-lg font-bold text-slate-700">
                     🩺 ณรงค์พล มั่นคง
                 </p>
-                <p class="font-light text-slate-500" style="font-size: 8rem;">
+                <p class="text-sm font-light text-slate-500">
                     💉 วิสัญญีพยาบาล
                 </p>
             </div>
@@ -78,21 +44,21 @@
             <!-- 3 Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-xl p-4 text-center shadow-sm">
-                    <div class="text-amber-800 font-medium" style="font-size: 6rem;">รายได้เวรทำการ</div>
-                    <div id="regular-income" class="font-bold text-amber-900 income-value">0 บาท</div>
+                    <div class="text-xs text-amber-800 font-medium">รายได้เวรทำการ</div>
+                    <div id="regular-income" class="text-xl font-bold text-amber-900">0 บาท</div>
                 </div>
                 <div class="bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 rounded-xl p-4 text-center shadow-sm">
-                    <div class="text-slate-700 font-medium" style="font-size: 6rem;">รายได้เวร Colonoscope</div>
-                    <div id="colo-income" class="font-bold text-slate-900 income-value">0 บาท</div>
+                    <div class="text-xs text-slate-700 font-medium">รายได้เวร Colonoscope</div>
+                    <div id="colo-income" class="text-xl font-bold text-slate-900">0 บาท</div>
                 </div>
             </div>
             <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center shadow-sm">
-                <div class="text-emerald-700 font-medium" style="font-size: 6rem;">รายได้รวม</div>
-                <div id="total-income" class="font-bold text-emerald-800 income-value" style="font-size: 14rem;">0 บาท</div>
+                <div class="text-xs text-emerald-700 font-medium">รายได้รวม</div>
+                <div id="total-income" class="text-2xl font-bold text-emerald-800">0 บาท</div>
             </div>
         </header>
 
-        <!-- Month Navigation & Controls (คงเดิม) -->
+        <!-- Month Navigation & Controls -->
         <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&lt;</button>
@@ -102,7 +68,7 @@
             <button onclick="goToCurrentMonth()" class="text-sm bg-sky-100 text-sky-700 px-4 py-2 rounded-xl font-medium hover:bg-sky-200 transition">เดือนปัจจุบัน</button>
         </div>
 
-        <!-- Calendar Grid (คงเดิม 100% ทั้งฟอนต์และขนาด) -->
+        <!-- Calendar Grid -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
             <div class="grid grid-cols-7 bg-slate-100 text-center text-xs font-semibold text-slate-600 py-3 border-b border-slate-200">
                 <span class="text-red-500">อา.</span>
@@ -116,41 +82,41 @@
             <div id="calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px"></div>
         </div>
 
-        <!-- Detailed Summary Tables: ใช้ฟอนต์แนบ, ใหญ่ขึ้น 5 เท่า, ระยะห่างแคบลง -->
-        <div class="space-y-6 custom-detail-section">
+        <!-- Detailed Summary Tables -->
+        <div class="space-y-6">
             <!-- Part 1: เวรทำการ -->
             <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
-                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <h3 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <span>📊</span> รายละเอียด : เวรทำการ
                 </h3>
-                <table class="w-full text-left border-collapse min-w-[650px] custom-detail-table">
+                <table class="w-full text-left border-collapse min-w-[650px] text-sm">
                     <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
-                            <th class="p-2 font-semibold w-1/6">รายการ</th>
-                            <th class="p-2 font-semibold w-1/6 text-center">จำนวนรวม</th>
-                            <th class="p-2 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
-                            <th class="p-2 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs">
+                            <th class="p-3 font-semibold w-1/6">รายการ</th>
+                            <th class="p-3 font-semibold w-1/6 text-center">จำนวนรวม</th>
+                            <th class="p-3 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
+                            <th class="p-3 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
                         </tr>
                     </thead>
-                    <tbody id="summary-table-regular" class="divide-y divide-slate-100"></tbody>
+                    <tbody id="summary-table-regular" class="divide-y divide-slate-100 text-xs"></tbody>
                 </table>
             </div>
 
             <!-- Part 2: เวร Colonoscope -->
             <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
-                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <h3 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <span>📊</span> รายละเอียด : เวร Colonoscope
                 </h3>
-                <table class="w-full text-left border-collapse min-w-[650px] custom-detail-table">
+                <table class="w-full text-left border-collapse min-w-[650px] text-sm">
                     <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
-                            <th class="p-2 font-semibold w-1/6">รายการ</th>
-                            <th class="p-2 font-semibold w-1/6 text-center">จำนวนรวม</th>
-                            <th class="p-2 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
-                            <th class="p-2 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs">
+                            <th class="p-3 font-semibold w-1/6">รายการ</th>
+                            <th class="p-3 font-semibold w-1/6 text-center">จำนวนรวม</th>
+                            <th class="p-3 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
+                            <th class="p-3 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
                         </tr>
                     </thead>
-                    <tbody id="summary-table-colo" class="divide-y divide-slate-100"></tbody>
+                    <tbody id="summary-table-colo" class="divide-y divide-slate-100 text-xs"></tbody>
                 </table>
             </div>
         </div>
@@ -559,56 +525,56 @@
             const tbodyReg = document.getElementById('summary-table-regular');
             tbodyReg.innerHTML = `
                 <tr>
-                    <td class="p-2 font-semibold text-slate-700">Obs</td>
-                    <td class="p-2 text-center font-medium">${regularStats.obs.count}</td>
-                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td>
-                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.obs.entries)}</td>
+                    <td class="p-3 font-semibold text-slate-700">Obs</td>
+                    <td class="p-3 text-center font-medium">${regularStats.obs.count}</td>
+                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td>
+                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.obs.entries)}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-semibold text-slate-700">On Call</td>
-                    <td class="p-2 text-center font-medium">${regularStats.oncall.count}</td>
-                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td>
-                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.oncall.entries)}</td>
+                    <td class="p-3 font-semibold text-slate-700">On Call</td>
+                    <td class="p-3 text-center font-medium">${regularStats.oncall.count}</td>
+                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td>
+                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.oncall.entries)}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-semibold text-slate-700">OT</td>
-                    <td class="p-2 text-center font-medium">${regularStats.ot.count}</td>
-                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td>
-                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.ot.entries)}</td>
+                    <td class="p-3 font-semibold text-slate-700">OT</td>
+                    <td class="p-3 text-center font-medium">${regularStats.ot.count}</td>
+                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td>
+                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.ot.entries)}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-semibold text-slate-700">Major</td>
-                    <td class="p-2 text-center font-medium">${regularStats.major.count}</td>
-                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td>
-                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.major.entries)}</td>
+                    <td class="p-3 font-semibold text-slate-700">Major</td>
+                    <td class="p-3 text-center font-medium">${regularStats.major.count}</td>
+                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td>
+                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.major.entries)}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-semibold text-slate-700">Minor</td>
-                    <td class="p-2 text-center font-medium">${regularStats.minor.count}</td>
-                    <td class="p-2 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td>
-                    <td class="p-2 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td>
+                    <td class="p-3 font-semibold text-slate-700">Minor</td>
+                    <td class="p-3 text-center font-medium">${regularStats.minor.count}</td>
+                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td>
+                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td>
                 </tr>
             `;
 
             const tbodyColo = document.getElementById('summary-table-colo');
             tbodyColo.innerHTML = `
                 <tr>
-                    <td class="p-2 font-semibold text-slate-700">OT</td>
-                    <td class="p-2 text-center font-medium">${coloStats.ot.count}</td>
-                    <td class="p-2 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td>
-                    <td class="p-2 text-slate-600 break-all">${formatEntries(coloStats.ot.entries)}</td>
+                    <td class="p-3 font-semibold text-slate-700">OT</td>
+                    <td class="p-3 text-center font-medium">${coloStats.ot.count}</td>
+                    <td class="p-3 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td>
+                    <td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.ot.entries)}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-semibold text-slate-700">Major</td>
-                    <td class="p-2 text-center font-medium">${coloStats.major.count}</td>
-                    <td class="p-2 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td>
-                    <td class="p-2 text-slate-600 break-all">${formatEntries(coloStats.major.entries)}</td>
+                    <td class="p-3 font-semibold text-slate-700">Major</td>
+                    <td class="p-3 text-center font-medium">${coloStats.major.count}</td>
+                    <td class="p-3 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td>
+                    <td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.major.entries)}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-semibold text-slate-700">Minor</td>
-                    <td class="p-2 text-center font-medium">${coloStats.minor.count}</td>
-                    <td class="p-2 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td>
-                    <td class="p-2 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td>
+                    <td class="p-3 font-semibold text-slate-700">Minor</td>
+                    <td class="p-3 text-center font-medium">${coloStats.minor.count}</td>
+                    <td class="p-3 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td>
+                    <td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td>
                 </tr>
             `;
         }
@@ -842,3 +808,4 @@
     </script>
 </body>
 </html>
+
