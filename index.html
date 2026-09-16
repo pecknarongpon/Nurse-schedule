@@ -1,3 +1,5 @@
+นี่คือโค้ด HTML ตัวเต็มแบบรวมโค้ดเว็บแอปตารางเวรและโค้ดสำหรับใส่ไอคอนแอป (Apple Touch Icon) ไว้ด้วยกันเรียบร้อยแล้วครับ คุณสามารถคัดลอกโค้ดชุดนี้ไปวางทับในไฟล์ index.html บน GitHub ของคุณได้เลย
+โดยผมได้เพิ่มโค้ดบรรทัด <link rel="apple-touch-icon" href="icon.png"> ไว้ให้ในส่วน <head> เรียบร้อยแล้ว (แนะนำให้ตั้งชื่อไฟล์รูปไอคอนของคุณบน GitHub เป็น icon.png ตามที่ตั้งค่าไว้ในโค้ดครับ)
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -8,13 +10,6 @@
     <link rel="apple-touch-icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @font-face {
-            font-family: 'MixedFruit';
-            src: url('FH%20Mixed%20Fruit%20Thin.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
-
         :root {
             --bg: #f8fafc;
         }
@@ -26,10 +21,7 @@
         :root[data-theme="dark"] {
             --bg: #0f172a;
         }
-        body { 
-            background-color: var(--bg);
-            font-family: 'MixedFruit', sans-serif !important;
-        }
+        body { background-color: var(--bg); }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
@@ -816,3 +808,4 @@
     </script>
 </body>
 </html>
+
