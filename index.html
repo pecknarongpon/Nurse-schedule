@@ -183,15 +183,22 @@
         let currentDate = new Date();
         let selectedDateStr = null;
         let shiftsData = {};
+        
+        // แก้ไขระบบโหลดข้อมูลให้ดึงจาก Key ถาวร และดึงของเก่ามาเผื่ออัตโนมัติ
         try {
-            shiftsData = JSON.parse(localStorage.getItem('nurse_shifts_v15')) || {};
+            let savedData = localStorage.getItem('nurse_shifts_data');
+            if (!savedData) {
+                savedData = localStorage.getItem('nurse_shifts_v15') || localStorage.getItem('nurse_shifts_v14');
+            }
+            shiftsData = savedData ? JSON.parse(savedData) : {};
         } catch (e) {
             shiftsData = {};
         }
 
         function saveToStorage() {
             try {
-                localStorage.setItem('nurse_shifts_v15', JSON.stringify(shiftsData));
+                // บันทึกลง Key ถาวรชื่อนี้เสมอไป
+                localStorage.setItem('nurse_shifts_data', JSON.stringify(shiftsData));
             } catch (e) {
                 console.error('ไม่สามารถบันทึกข้อมูลได้', e);
             }
@@ -363,10 +370,8 @@
             const todayObj = new Date();
             const isCurrentMonth = (month === todayObj.getMonth() && year === todayObj.getFullYear());
 
-            // บรรทัดแรก: แสดงชื่อเดือน (+1 ขนาดใหญ่ขึ้นเดิม)
             document.getElementById('month-year-display').innerText = `${monthNames[month]}`;
             
-            // บรรทัดต่อมา: แสดงเฉพาะเมื่ออยู่ที่เดือนปัจจุบันเท่านั้น ถ้าเลื่อนไปเดือนอื่นจะซ่อนข้อความนี้ไว้
             const currentDateHeaderDisplay = document.getElementById('current-date-header-display');
             if (isCurrentMonth) {
                 const todayDay = todayObj.getDate();
