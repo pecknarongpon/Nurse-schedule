@@ -166,17 +166,14 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modal-date-title" class="text-lg font-bold text-slate-800">จัดการเวรประจำวัน</h3>
+                <!-- ย้ายปุ่มไอคอน 📞 กลับมาไว้มุมขวา ข้างวันที่เหมือนเดิม และเอาตัวหนังสือออกเหลือแค่ไอคอน -->
+                <button type="button" id="modal-call-toggle-btn" onclick="toggleModalCallFlag()" class="w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs">
+                    📞
+                </button>
             </div>
             
             <div class="space-y-5">
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative">
-                    <!-- ปุ่มไอคอน 📞 ย้ายมาไว้ที่มุมขวาบนของกรอบเวร และเอาคำว่าโทรออกเหลือแต่ไอคอน -->
-                    <div class="absolute top-4 right-4">
-                        <button type="button" id="modal-call-toggle-btn" onclick="toggleModalCallFlag()" class="w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs">
-                            📞
-                        </button>
-                    </div>
-
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <label class="block text-sm font-bold text-slate-700 mb-2">📌 เวร</label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         <label class="flex items-center gap-2 p-2.5 bg-slate-200 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-300 transition">
@@ -420,7 +417,9 @@
 
                 const cell = document.createElement('div');
                 cell.className = `bg-white min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
-                cell.onclick = () => openModal(dateStr);
+                
+                // ใช้การกด 2 ครั้ง (ondblclick) เพื่อเปิด Modal แก้ไขข้อมูล
+                cell.ondblclick = () => openModal(dateStr);
 
                 let shiftBadgesHtml = '';
                 let incomeBoxHtml = '';
