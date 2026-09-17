@@ -60,7 +60,10 @@
         <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&lt;</button>
-                <h2 id="month-year-display" class="text-lg font-semibold text-slate-700 min-w-[180px] text-center">มกราคม 2569</h2>
+                <div class="min-w-[200px] text-center">
+                    <h2 id="month-year-display" class="text-2xl font-bold text-slate-700">มกราคม</h2>
+                    <p id="current-date-header-display" class="text-xs text-rose-600 font-medium mt-0.5 h-4"></p>
+                </div>
                 <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&gt;</button>
             </div>
             <button onclick="goToCurrentMonth()" class="text-sm bg-sky-100 text-sky-700 px-4 py-2 rounded-xl font-medium hover:bg-sky-200 transition">เดือนปัจจุบัน</button>
@@ -128,7 +131,11 @@
             <div class="space-y-5">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <label class="block text-sm font-bold text-slate-700 mb-2">📌 เวร (เลือกได้มากกว่า 1)</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <label class="flex items-center gap-2 p-2.5 bg-slate-200 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-300 transition">
+                            <input type="checkbox" name="shift-option" value="ดึก" onchange="handleShiftSelectionChange()" class="rounded text-slate-700 focus:ring-slate-500">
+                            <span class="text-xs font-semibold text-slate-800">ดึก</span>
+                        </label>
                         <label class="flex items-center gap-2 p-2.5 bg-sky-50 border border-sky-200 rounded-lg cursor-pointer hover:bg-sky-100 transition">
                             <input type="checkbox" name="shift-option" value="เช้า" onchange="handleShiftSelectionChange()" class="rounded text-sky-600 focus:ring-sky-500">
                             <span class="text-xs font-semibold text-sky-800">เช้า</span>
@@ -137,13 +144,17 @@
                             <input type="checkbox" name="shift-option" value="บ่าย" onchange="handleShiftSelectionChange()" class="rounded text-pink-600 focus:ring-pink-500">
                             <span class="text-xs font-semibold text-pink-800">บ่าย</span>
                         </label>
-                        <label class="flex items-center gap-2 p-2.5 bg-slate-200 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-300 transition">
-                            <input type="checkbox" name="shift-option" value="ดึก" onchange="handleShiftSelectionChange()" class="rounded text-slate-700 focus:ring-slate-500">
-                            <span class="text-xs font-semibold text-slate-800">ดึก</span>
-                        </label>
                         <label class="flex items-center gap-2 p-2.5 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition">
                             <input type="checkbox" name="shift-option" value="Colonoscope" onchange="handleShiftSelectionChange()" class="rounded text-purple-600 focus:ring-purple-500">
                             <span class="text-xs font-semibold text-purple-800">Colonoscope</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg cursor-pointer hover:bg-emerald-100 transition">
+                            <input type="checkbox" name="shift-option" value="Off" onchange="handleShiftSelectionChange()" class="rounded text-emerald-600 focus:ring-emerald-500">
+                            <span class="text-xs font-semibold text-emerald-800">Off</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-emerald-100 border border-emerald-300 rounded-lg cursor-pointer hover:bg-emerald-200 transition">
+                            <input type="checkbox" name="shift-option" value="Vacation" onchange="handleShiftSelectionChange()" class="rounded text-emerald-700 focus:ring-emerald-500">
+                            <span class="text-xs font-semibold text-emerald-900">Vacation</span>
                         </label>
                     </div>
                 </div>
@@ -173,14 +184,14 @@
         let selectedDateStr = null;
         let shiftsData = {};
         try {
-            shiftsData = JSON.parse(localStorage.getItem('nurse_shifts_v13')) || {};
+            shiftsData = JSON.parse(localStorage.getItem('nurse_shifts_v15')) || {};
         } catch (e) {
             shiftsData = {};
         }
 
         function saveToStorage() {
             try {
-                localStorage.setItem('nurse_shifts_v13', JSON.stringify(shiftsData));
+                localStorage.setItem('nurse_shifts_v15', JSON.stringify(shiftsData));
             } catch (e) {
                 console.error('ไม่สามารถบันทึกข้อมูลได้', e);
             }
@@ -195,11 +206,15 @@
             if (s === 'บ่าย') return 'บ';
             if (s === 'ดึก') return 'ด';
             if (s === 'Colonoscope') return 'C';
+            if (s === 'Off') return 'Off';
+            if (s === 'Vacation') return 'Vac';
             return s;
         }
 
         function calculateShiftIncome(item) {
-            let sName = item.shift;
+            if (item.shift === 'Off' || item.shift === 'Vacation') {
+                return 0;
+            }
             let isObs = !!item.obs;
             let isOncall = !!item.oncall;
             let mCount = parseInt(item.major) || 0;
@@ -210,8 +225,6 @@
             let sumMM = mTotal + miTotal;
 
             let shiftOt = 0;
-            let activeM = 0;
-            let activeMi = 0;
             let adjustedMM = 0;
 
             if (sumMM > 0) {
@@ -219,8 +232,6 @@
                     shiftOt = 1;
                     adjustedMM = 710;
                 } else {
-                    activeM = mCount;
-                    activeMi = miCount;
                     adjustedMM = sumMM;
                 }
             }
@@ -247,11 +258,12 @@
                     obs: !!data.obs,
                     oncall: !!data.oncall,
                     major: parseInt(data.major) || 0,
-                    minor: parseInt(data.minor) || 0
+                    minor: parseInt(data.minor) || 0,
+                    note: data.note || ''
                 }));
             }
 
-            const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4 };
+            const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
             shiftList.sort((a, b) => {
                 let rankA = shiftOrder[a.shift] || 99;
                 let rankB = shiftOrder[b.shift] || 99;
@@ -261,8 +273,23 @@
             shiftList.forEach(item => {
                 let sName = item.shift;
                 let isColo = (sName === 'Colonoscope');
-                let displayShiftName = isColo ? 'เวร C' : sName;
+                let isOff = (sName === 'Off');
+                let isVac = (sName === 'Vacation');
+                let displayShiftName = isColo ? 'เวร C' : (isVac ? 'Vac' : sName);
                 let abbr = getShiftAbbr(sName);
+
+                if (isOff || isVac) {
+                    blocks.push([displayShiftName, item.note || '']);
+                    detailsPerShift.push({
+                        shift: sName,
+                        isColo: false,
+                        isOffVac: true,
+                        abbr,
+                        note: item.note || ''
+                    });
+                    return;
+                }
+
                 let isObs = !!item.obs;
                 let isOncall = !!item.oncall;
                 let mCount = parseInt(item.major) || 0;
@@ -310,6 +337,7 @@
                 detailsPerShift.push({
                     shift: sName,
                     isColo,
+                    isOffVac: false,
                     abbr,
                     obs: isObs,
                     oncall: isOncall,
@@ -332,7 +360,22 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
-            document.getElementById('month-year-display').innerText = `${monthNames[month]} ${year + 543}`;
+            const todayObj = new Date();
+            const isCurrentMonth = (month === todayObj.getMonth() && year === todayObj.getFullYear());
+
+            // บรรทัดแรก: แสดงชื่อเดือน (+1 ขนาดใหญ่ขึ้นเดิม)
+            document.getElementById('month-year-display').innerText = `${monthNames[month]}`;
+            
+            // บรรทัดต่อมา: แสดงเฉพาะเมื่ออยู่ที่เดือนปัจจุบันเท่านั้น ถ้าเลื่อนไปเดือนอื่นจะซ่อนข้อความนี้ไว้
+            const currentDateHeaderDisplay = document.getElementById('current-date-header-display');
+            if (isCurrentMonth) {
+                const todayDay = todayObj.getDate();
+                const todayMonthName = monthNames[todayObj.getMonth()];
+                const todayYearThai = todayObj.getFullYear() + 543;
+                currentDateHeaderDisplay.innerText = `${todayDay} ${todayMonthName} ${todayYearThai}`;
+            } else {
+                currentDateHeaderDisplay.innerText = `${monthNames[month]} ${year + 543}`;
+            }
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
@@ -367,8 +410,10 @@
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = shiftsData[dateStr];
 
+                const isToday = (day === todayObj.getDate() && month === todayObj.getMonth() && year === todayObj.getFullYear());
+
                 const cell = document.createElement('div');
-                cell.className = 'bg-white min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition relative';
+                cell.className = `bg-white min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 cell.onclick = () => openModal(dateStr);
 
                 let shiftNames = [];
@@ -379,7 +424,7 @@
                     } else if (dayData.shifts) {
                         rawList = dayData.shifts;
                     }
-                    const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4 };
+                    const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
                     shiftNames = [...rawList].sort((a, b) => (shiftOrder[a] || 99) - (shiftOrder[b] || 99));
                 }
 
@@ -394,6 +439,7 @@
                     coloTotalMonthly += calcResult.coloTotal;
 
                     calcResult.detailsPerShift.forEach(ds => {
+                        if (ds.isOffVac) return;
                         if (!ds.isColo) {
                             if (ds.obs) {
                                 regularStats.obs.count += 1;
@@ -451,20 +497,36 @@
                                 badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300';
                                 displayLabel = 'C';
                             }
+                            else if (s === 'Off') {
+                                badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+                                displayLabel = 'Off';
+                            }
+                            else if (s === 'Vacation') {
+                                badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold';
+                                displayLabel = 'Vac';
+                            }
 
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
                         shiftBadgesHtml += '</div>';
                     }
 
-                    if (dailyTotal > 0) {
-                        const hasC = shiftNames.includes('Colonoscope');
-                        const boxGradient = hasC 
-                            ? 'bg-gradient-to-b from-slate-100 via-slate-200 to-slate-300 border-slate-400 text-slate-900' 
-                            : 'bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950';
-
+                    if (calcResult.blocks.length > 0) {
                         let contentBlocksHtml = '';
                         calcResult.blocks.forEach((blockLines, bIdx) => {
+                            let sName = blockLines[0];
+                            let isOffBlock = (sName === 'Off');
+                            let isVacBlock = (sName === 'Vac');
+                            
+                            let boxGradient = 'bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950';
+                            if (sName === 'Colonoscope') {
+                                boxGradient = 'bg-gradient-to-b from-slate-100 via-slate-200 to-slate-300 border-slate-400 text-slate-900';
+                            } else if (isOffBlock) {
+                                boxGradient = 'bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950';
+                            } else if (isVacBlock) {
+                                boxGradient = 'bg-gradient-to-b from-emerald-100 via-emerald-200 to-emerald-300 border-emerald-400 text-emerald-950';
+                            }
+
                             let blockInnerHtml = '';
                             blockLines.forEach((lineText, lIdx) => {
                                 if (lIdx === 0) {
@@ -481,13 +543,11 @@
                         });
 
                         incomeBoxHtml = `
-                            <div class="mt-1 p-1.5 rounded-lg border text-[10px] shadow-xs ${boxGradient}">
+                            <div class="mt-1 p-1.5 rounded-lg border text-[10px] shadow-xs ${calcResult.blocks.some(b => b[0] === 'Off' || b[0] === 'Vac') && calcResult.blocks.length === 1 ? 'bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950' : 'bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950'}">
                                 <div class="space-y-0.5">
                                     ${contentBlocksHtml}
                                 </div>
-                                <div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">
-                                    ${dailyTotal.toLocaleString()} บาท
-                                </div>
+                                ${dailyTotal > 0 ? `<div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">${dailyTotal.toLocaleString()} บาท</div>` : ''}
                             </div>
                         `;
                     }
@@ -603,7 +663,8 @@
                     obs: !!existing.obs,
                     oncall: !!existing.oncall,
                     major: existing.major || 0,
-                    minor: existing.minor || 0
+                    minor: existing.minor || 0,
+                    note: existing.note || ''
                 }));
             }
 
@@ -628,7 +689,7 @@
 
             let newDetails = selectedShifts.map(s => {
                 const existing = currentDetails.find(d => d.shift === s);
-                return existing || { shift: s, obs: false, oncall: false, major: 0, minor: 0 };
+                return existing || { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' };
             });
 
             renderShiftIncomeInputs(newDetails);
@@ -640,7 +701,7 @@
             container.innerHTML = '';
 
             if (details.length === 0) {
-                container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อกำหนดรายได้แยกตามเวร</div>';
+                container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อกำหนดรายได้หรือรายละเอียด</div>';
                 updatePreviewTotal();
                 return;
             }
@@ -650,52 +711,66 @@
                 if (item.shift === 'บ่าย') badgeBg = 'bg-pink-50 text-pink-800 border-pink-200';
                 else if (item.shift === 'ดึก') badgeBg = 'bg-slate-100 text-slate-800 border-slate-300';
                 else if (item.shift === 'Colonoscope') badgeBg = 'bg-purple-50 text-purple-800 border-purple-200';
+                else if (item.shift === 'Off') badgeBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                else if (item.shift === 'Vacation') badgeBg = 'bg-emerald-700 text-white border-emerald-800';
 
-                const currentCalculatedIncome = calculateShiftIncome(item);
-
+                const isOffVac = (item.shift === 'Off' || item.shift === 'Vacation');
                 const div = document.createElement('div');
                 div.className = 'p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
                 div.setAttribute('data-shift-card-index', index);
                 
-                let extraInputsHtml = '';
-                if (item.shift !== 'Colonoscope') {
-                    extraInputsHtml = `
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
-                                <input type="checkbox" data-shift-idx="${index}" data-field="obs" ${item.obs ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600 focus:ring-sky-500">
-                                <div class="text-xs">
-                                    <span class="font-semibold text-slate-700">Obs</span> 
-                                    <span class="text-slate-400">(88 ฿)</span>
-                                </div>
-                            </label>
-                            <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
-                                <input type="checkbox" data-shift-idx="${index}" data-field="oncall" ${item.oncall ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600 focus:ring-sky-500">
-                                <div class="text-xs">
-                                    <span class="font-semibold text-slate-700">On Call</span> 
-                                    <span class="text-slate-400">(142 ฿)</span>
-                                </div>
-                            </label>
+                if (isOffVac) {
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
+                        </div>
+                        <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
+                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">รายละเอียดเพิ่มเติม</label>
+                            <input type="text" data-shift-idx="${index}" data-field="note" placeholder="กรอกรายละเอียด..." value="${item.note || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                    `;
+                } else {
+                    const currentCalculatedIncome = calculateShiftIncome(item);
+                    let extraInputsHtml = '';
+                    if (item.shift !== 'Colonoscope') {
+                        extraInputsHtml = `
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
+                                    <input type="checkbox" data-shift-idx="${index}" data-field="obs" ${item.obs ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600 focus:ring-sky-500">
+                                    <div class="text-xs">
+                                        <span class="font-semibold text-slate-700">Obs</span> 
+                                        <span class="text-slate-400">(88 ฿)</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
+                                    <input type="checkbox" data-shift-idx="${index}" data-field="oncall" ${item.oncall ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600 focus:ring-sky-500">
+                                    <div class="text-xs">
+                                        <span class="font-semibold text-slate-700">On Call</span> 
+                                        <span class="text-slate-400">(142 ฿)</span>
+                                    </div>
+                                </label>
+                            </div>
+                        `;
+                    }
+
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
+                            <span class="text-xs font-bold text-slate-700 shift-subtotal-display">${currentCalculatedIncome.toLocaleString()} บาท</span>
+                        </div>
+                        ${extraInputsHtml}
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
+                                <label class="block text-[10px] font-semibold text-slate-700 mb-1">Major (250 ฿)</label>
+                                <input type="number" data-shift-idx="${index}" data-field="major" min="0" placeholder="" value="${item.major !== undefined && item.major !== 0 ? item.major : ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                            </div>
+                            <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
+                                <label class="block text-[10px] font-semibold text-slate-700 mb-1">Minor (130 ฿)</label>
+                                <input type="number" data-shift-idx="${index}" data-field="minor" min="0" placeholder="" value="${item.minor !== undefined && item.minor !== 0 ? item.minor : ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                            </div>
                         </div>
                     `;
                 }
-
-                div.innerHTML = `
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                        <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
-                        <span class="text-xs font-bold text-slate-700 shift-subtotal-display">${currentCalculatedIncome.toLocaleString()} บาท</span>
-                    </div>
-                    ${extraInputsHtml}
-                    <div class="grid grid-cols-2 gap-2 pt-1">
-                        <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
-                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">Major (250 ฿)</label>
-                            <input type="number" data-shift-idx="${index}" data-field="major" min="0" placeholder="" value="${item.major !== undefined && item.major !== 0 ? item.major : ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:ring-1 focus:ring-sky-500 focus:outline-none">
-                        </div>
-                        <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
-                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">Minor (130 ฿)</label>
-                            <input type="number" data-shift-idx="${index}" data-field="minor" min="0" placeholder="" value="${item.minor !== undefined && item.minor !== 0 ? item.minor : ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:ring-1 focus:ring-sky-500 focus:outline-none">
-                        </div>
-                    </div>
-                `;
                 container.appendChild(div);
             });
 
@@ -708,6 +783,8 @@
                 const badge = div.querySelector('span');
                 if (!badge) return;
                 const shiftName = badge.innerText.replace('เวร: ', '').trim();
+
+                if (shiftName === 'Off' || shiftName === 'Vacation') return;
 
                 const obsCb = div.querySelector('input[data-field="obs"]');
                 const oncallCb = div.querySelector('input[data-field="oncall"]');
@@ -741,23 +818,31 @@
                 if (!badge) return;
                 const shiftName = badge.innerText.replace('เวร: ', '').trim();
 
-                const obsCb = div.querySelector('input[data-field="obs"]');
-                const oncallCb = div.querySelector('input[data-field="oncall"]');
-                const majorIn = div.querySelector('input[data-field="major"]');
-                const minorIn = div.querySelector('input[data-field="minor"]');
+                if (shiftName === 'Off' || shiftName === 'Vacation') {
+                    const noteIn = div.querySelector('input[data-field="note"]');
+                    details.push({
+                        shift: shiftName,
+                        note: noteIn ? noteIn.value : ''
+                    });
+                } else {
+                    const obsCb = div.querySelector('input[data-field="obs"]');
+                    const oncallCb = div.querySelector('input[data-field="oncall"]');
+                    const majorIn = div.querySelector('input[data-field="major"]');
+                    const minorIn = div.querySelector('input[data-field="minor"]');
 
-                details.push({
-                    shift: shiftName,
-                    obs: obsCb ? obsCb.checked : false,
-                    oncall: oncallCb ? oncallCb.checked : false,
-                    major: majorIn && majorIn.value !== '' ? parseInt(majorIn.value) || 0 : 0,
-                    minor: minorIn && minorIn.value !== '' ? parseInt(minorIn.value) || 0 : 0
-                });
+                    details.push({
+                        shift: shiftName,
+                        obs: obsCb ? obsCb.checked : false,
+                        oncall: oncallCb ? oncallCb.checked : false,
+                        major: majorIn && majorIn.value !== '' ? parseInt(majorIn.value) || 0 : 0,
+                        minor: minorIn && minorIn.value !== '' ? parseInt(minorIn.value) || 0 : 0
+                    });
+                }
             });
 
             if (containers.length === 0) {
                 document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => {
-                    details.push({ shift: cb.value, obs: false, oncall: false, major: 0, minor: 0 });
+                    details.push({ shift: cb.value, obs: false, oncall: false, major: 0, minor: 0, note: '' });
                 });
             }
 
@@ -781,7 +866,7 @@
             if (!selectedDateStr) return;
 
             const details = gatherModalDetailsFromUI();
-            let hasData = details.length > 0 && details.some(d => d.shift || d.obs || d.oncall || d.major > 0 || d.minor > 0);
+            let hasData = details.length > 0 && details.some(d => d.shift || d.obs || d.oncall || d.major > 0 || d.minor > 0 || d.note);
 
             if (!hasData) {
                 delete shiftsData[selectedDateStr];
@@ -806,4 +891,3 @@
     </script>
 </body>
 </html>
-
