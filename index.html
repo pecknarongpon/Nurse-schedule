@@ -4,21 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ตารางเวร ณรงค์พล มั่นคง วิสัญญีพยาบาล</title>
-    <!-- โค้ดสำหรับไอคอนบนหน้าจอ iPhone -->
     <link rel="apple-touch-icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            --bg: #f8fafc;
-        }
-        @media (prefers-color-scheme: dark) {
-            :root:not([data-theme="light"]) {
-                --bg: #0f172a;
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBxGPPWsH7bQ22khU8hdY0HL-zgptnC-zI",
+          authDomain: "nurse-shift-app-bb2ab.firebaseapp.com",
+          projectId: "nurse-shift-app-bb2ab",
+          storageBucket: "nurse-shift-app-bb2ab.firebasestorage.app",
+          messagingSenderId: "622756187470",
+          appId: "1:622756187470:web:6384311aed4dd3ce74621f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // นำฟังก์ชันไปผูกกับ window เพื่อให้เรียกใช้งานจากปุ่มใน HTML ได้
+        window.loadCloudData = async function() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "nurse_shifts"));
+                querySnapshot.forEach((docSnap) => {
+                    shiftsData[docSnap.id] = docSnap.data();
+                });
+                renderCalendar();
+            } catch (e) {
+                console.error("Error loading cloud data: ", e);
             }
+        };
+
+        window.saveCloudShift = async function(dateStr, data) {
+            try {
+                await setDoc(doc(db, "nurse_shifts", dateStr), data);
+            } catch (e) {
+                console.error("Error saving shift: ", e);
+            }
+        };
+
+        window.deleteCloudShift = async function(dateStr) {
+            try {
+                await deleteDoc(doc(db, "nurse_shifts", dateStr));
+            } catch (e) {
+                console.error("Error deleting shift: ", e);
+            }
+        };
+
+        // โหลดข้อมูลทันทีเมื่อเปิดเว็บ
+        window.loadCloudData();
+    </script>
+    <style>
+        :root { --bg: #f8fafc; }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) { --bg: #0f172a; }
         }
-        :root[data-theme="dark"] {
-            --bg: #0f172a;
-        }
+        :root[data-theme="dark"] { --bg: #0f172a; }
         body { background-color: var(--bg); }
     </style>
 </head>
@@ -85,7 +127,6 @@
 
         <!-- Detailed Summary Tables -->
         <div class="space-y-6">
-            <!-- Part 1: เวรทำการ -->
             <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
                 <h3 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <span>📊</span> รายละเอียด : เวรทำการ
@@ -103,7 +144,6 @@
                 </table>
             </div>
 
-            <!-- Part 2: เวร Colonoscope -->
             <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
                 <h3 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <span>📊</span> รายละเอียด : เวร Colonoscope
@@ -123,7 +163,7 @@
         </div>
     </div>
 
-    <!-- Modal for adding/editing shift -->
+    <!-- Modal -->
     <div id="shift-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
             <h3 id="modal-date-title" class="text-lg font-bold text-slate-800 mb-4">จัดการเวรประจำวัน</h3>
@@ -183,26 +223,6 @@
         let currentDate = new Date();
         let selectedDateStr = null;
         let shiftsData = {};
-        
-        // แก้ไขระบบโหลดข้อมูลให้ดึงจาก Key ถาวร และดึงของเก่ามาเผื่ออัตโนมัติ
-        try {
-            let savedData = localStorage.getItem('nurse_shifts_data');
-            if (!savedData) {
-                savedData = localStorage.getItem('nurse_shifts_v15') || localStorage.getItem('nurse_shifts_v14');
-            }
-            shiftsData = savedData ? JSON.parse(savedData) : {};
-        } catch (e) {
-            shiftsData = {};
-        }
-
-        function saveToStorage() {
-            try {
-                // บันทึกลง Key ถาวรชื่อนี้เสมอไป
-                localStorage.setItem('nurse_shifts_data', JSON.stringify(shiftsData));
-            } catch (e) {
-                console.error('ไม่สามารถบันทึกข้อมูลได้', e);
-            }
-        }
 
         function initCalendar() {
             renderCalendar();
@@ -219,9 +239,7 @@
         }
 
         function calculateShiftIncome(item) {
-            if (item.shift === 'Off' || item.shift === 'Vacation') {
-                return 0;
-            }
+            if (item.shift === 'Off' || item.shift === 'Vacation') return 0;
             let isObs = !!item.obs;
             let isOncall = !!item.oncall;
             let mCount = parseInt(item.major) || 0;
@@ -243,8 +261,7 @@
                 }
             }
 
-            let shiftIncome = adjustedMM + (isObs ? 88 : 0) + (isOncall ? 142 : 0);
-            return shiftIncome;
+            return adjustedMM + (isObs ? 88 : 0) + (isOncall ? 142 : 0);
         }
 
         function calculateDayDetails(data) {
@@ -271,11 +288,7 @@
             }
 
             const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
-            shiftList.sort((a, b) => {
-                let rankA = shiftOrder[a.shift] || 99;
-                let rankB = shiftOrder[b.shift] || 99;
-                return rankA - rankB;
-            });
+            shiftList.sort((a, b) => (shiftOrder[a.shift] || 99) - (shiftOrder[b.shift] || 99));
 
             shiftList.forEach(item => {
                 let sName = item.shift;
@@ -287,13 +300,7 @@
 
                 if (isOff || isVac) {
                     blocks.push([displayShiftName, item.note || '']);
-                    detailsPerShift.push({
-                        shift: sName,
-                        isColo: false,
-                        isOffVac: true,
-                        abbr,
-                        note: item.note || ''
-                    });
+                    detailsPerShift.push({ shift: sName, isColo: false, isOffVac: true, abbr, note: item.note || '' });
                     return;
                 }
 
@@ -325,14 +332,10 @@
                 let shiftIncome = adjustedMM + (isObs ? 88 : 0) + (isOncall ? 142 : 0);
                 totalSum += shiftIncome;
 
-                if (isColo) {
-                    coloTotal += shiftIncome;
-                } else {
-                    regularTotal += shiftIncome;
-                }
+                if (isColo) coloTotal += shiftIncome;
+                else regularTotal += shiftIncome;
 
-                let shiftLines = [];
-                shiftLines.push(displayShiftName);
+                let shiftLines = [displayShiftName];
                 if (isObs) shiftLines.push('Obs');
                 if (isOncall) shiftLines.push('oncall');
                 if (activeM > 0) shiftLines.push(`Major x${activeM}`);
@@ -342,68 +345,39 @@
                 blocks.push(shiftLines);
 
                 detailsPerShift.push({
-                    shift: sName,
-                    isColo,
-                    isOffVac: false,
-                    abbr,
-                    obs: isObs,
-                    oncall: isOncall,
-                    ot: shiftOt > 0,
-                    major: activeM,
-                    minor: activeMi
+                    shift: sName, isColo, isOffVac: false, abbr,
+                    obs: isObs, oncall: isOncall, ot: shiftOt > 0,
+                    major: activeM, minor: activeMi
                 });
             });
 
-            return {
-                total: totalSum,
-                regularTotal,
-                coloTotal,
-                blocks,
-                detailsPerShift
-            };
+            return { total: totalSum, regularTotal, coloTotal, blocks, detailsPerShift };
         }
 
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-
             const todayObj = new Date();
             const isCurrentMonth = (month === todayObj.getMonth() && year === todayObj.getFullYear());
 
             document.getElementById('month-year-display').innerText = `${monthNames[month]}`;
-            
             const currentDateHeaderDisplay = document.getElementById('current-date-header-display');
             if (isCurrentMonth) {
-                const todayDay = todayObj.getDate();
-                const todayMonthName = monthNames[todayObj.getMonth()];
-                const todayYearThai = todayObj.getFullYear() + 543;
-                currentDateHeaderDisplay.innerText = `${todayDay} ${todayMonthName} ${todayYearThai}`;
+                currentDateHeaderDisplay.innerText = `${todayObj.getDate()} ${monthNames[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}`;
             } else {
                 currentDateHeaderDisplay.innerText = `${monthNames[month]} ${year + 543}`;
             }
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
-
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
 
             let regularTotalMonthly = 0;
             let coloTotalMonthly = 0;
 
-            let regularStats = {
-                obs: { count: 0, total: 0, entries: [] },
-                oncall: { count: 0, total: 0, entries: [] },
-                ot: { count: 0, total: 0, entries: [] },
-                major: { count: 0, total: 0, entries: [] },
-                minor: { count: 0, total: 0, entries: [] }
-            };
-
-            let coloStats = {
-                ot: { count: 0, total: 0, entries: [] },
-                major: { count: 0, total: 0, entries: [] },
-                minor: { count: 0, total: 0, entries: [] }
-            };
+            let regularStats = { obs: { count: 0, total: 0, entries: [] }, oncall: { count: 0, total: 0, entries: [] }, ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
+            let coloStats = { ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
 
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyCell = document.createElement('div');
@@ -414,7 +388,6 @@
             for (let day = 1; day <= totalDays; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = shiftsData[dateStr];
-
                 const isToday = (day === todayObj.getDate() && month === todayObj.getMonth() && year === todayObj.getFullYear());
 
                 const cell = document.createElement('div');
@@ -423,14 +396,9 @@
 
                 let shiftNames = [];
                 if (dayData) {
-                    let rawList = [];
-                    if (dayData.shiftDetails && Array.isArray(dayData.shiftDetails)) {
-                        rawList = dayData.shiftDetails.map(i => i.shift);
-                    } else if (dayData.shifts) {
-                        rawList = dayData.shifts;
-                    }
+                    let rawList = dayData.shiftDetails || [];
                     const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
-                    shiftNames = [...rawList].sort((a, b) => (shiftOrder[a] || 99) - (shiftOrder[b] || 99));
+                    shiftNames = rawList.map(i => i.shift).sort((a, b) => (shiftOrder[a] || 99) - (shiftOrder[b] || 99));
                 }
 
                 let shiftBadgesHtml = '';
@@ -438,55 +406,21 @@
 
                 if (dayData) {
                     const calcResult = calculateDayDetails(dayData);
-                    const dailyTotal = calcResult.total;
-
                     regularTotalMonthly += calcResult.regularTotal;
                     coloTotalMonthly += calcResult.coloTotal;
 
                     calcResult.detailsPerShift.forEach(ds => {
                         if (ds.isOffVac) return;
                         if (!ds.isColo) {
-                            if (ds.obs) {
-                                regularStats.obs.count += 1;
-                                regularStats.obs.total += 88;
-                                regularStats.obs.entries.push(`${day}${ds.abbr}`);
-                            }
-                            if (ds.oncall) {
-                                regularStats.oncall.count += 1;
-                                regularStats.oncall.total += 142;
-                                regularStats.oncall.entries.push(`${day}${ds.abbr}`);
-                            }
-                            if (ds.ot) {
-                                regularStats.ot.count += 1;
-                                regularStats.ot.total += 710;
-                                regularStats.ot.entries.push(`${day}${ds.abbr}`);
-                            }
-                            if (ds.major > 0) {
-                                regularStats.major.count += ds.major;
-                                regularStats.major.total += (ds.major * 250);
-                                regularStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`);
-                            }
-                            if (ds.minor > 0) {
-                                regularStats.minor.count += ds.minor;
-                                regularStats.minor.total += (ds.minor * 130);
-                                regularStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`);
-                            }
+                            if (ds.obs) { regularStats.obs.count += 1; regularStats.obs.total += 88; regularStats.obs.entries.push(`${day}${ds.abbr}`); }
+                            if (ds.oncall) { regularStats.oncall.count += 1; regularStats.oncall.total += 142; regularStats.oncall.entries.push(`${day}${ds.abbr}`); }
+                            if (ds.ot) { regularStats.ot.count += 1; regularStats.ot.total += 710; regularStats.ot.entries.push(`${day}${ds.abbr}`); }
+                            if (ds.major > 0) { regularStats.major.count += ds.major; regularStats.major.total += (ds.major * 250); regularStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
+                            if (ds.minor > 0) { regularStats.minor.count += ds.minor; regularStats.minor.total += (ds.minor * 130); regularStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
                         } else {
-                            if (ds.ot) {
-                                coloStats.ot.count += 1;
-                                coloStats.ot.total += 710;
-                                coloStats.ot.entries.push(`${day}${ds.abbr}`);
-                            }
-                            if (ds.major > 0) {
-                                coloStats.major.count += ds.major;
-                                coloStats.major.total += (ds.major * 250);
-                                coloStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`);
-                            }
-                            if (ds.minor > 0) {
-                                coloStats.minor.count += ds.minor;
-                                coloStats.minor.total += (ds.minor * 130);
-                                coloStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`);
-                            }
+                            if (ds.ot) { coloStats.ot.count += 1; coloStats.ot.total += 710; coloStats.ot.entries.push(`${day}${ds.abbr}`); }
+                            if (ds.major > 0) { coloStats.major.count += ds.major; coloStats.major.total += (ds.major * 250); coloStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
+                            if (ds.minor > 0) { coloStats.minor.count += ds.minor; coloStats.minor.total += (ds.minor * 130); coloStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
                         }
                     });
 
@@ -498,19 +432,9 @@
                             if (s === 'เช้า') badgeStyle = 'bg-sky-100 text-sky-800 border-sky-300';
                             else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-300';
                             else if (s === 'ดึก') badgeStyle = 'bg-slate-200 text-slate-800 border-slate-400';
-                            else if (s === 'Colonoscope') {
-                                badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300';
-                                displayLabel = 'C';
-                            }
-                            else if (s === 'Off') {
-                                badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
-                                displayLabel = 'Off';
-                            }
-                            else if (s === 'Vacation') {
-                                badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold';
-                                displayLabel = 'Vac';
-                            }
-
+                            else if (s === 'Colonoscope') { badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300'; displayLabel = 'C'; }
+                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'Off'; }
+                            else if (s === 'Vacation') { badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold'; displayLabel = 'Vac'; }
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
                         shiftBadgesHtml += '</div>';
@@ -519,40 +443,15 @@
                     if (calcResult.blocks.length > 0) {
                         let contentBlocksHtml = '';
                         calcResult.blocks.forEach((blockLines, bIdx) => {
-                            let sName = blockLines[0];
-                            let isOffBlock = (sName === 'Off');
-                            let isVacBlock = (sName === 'Vac');
-                            
-                            let boxGradient = 'bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950';
-                            if (sName === 'Colonoscope') {
-                                boxGradient = 'bg-gradient-to-b from-slate-100 via-slate-200 to-slate-300 border-slate-400 text-slate-900';
-                            } else if (isOffBlock) {
-                                boxGradient = 'bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950';
-                            } else if (isVacBlock) {
-                                boxGradient = 'bg-gradient-to-b from-emerald-100 via-emerald-200 to-emerald-300 border-emerald-400 text-emerald-950';
-                            }
-
-                            let blockInnerHtml = '';
+                            if (bIdx > 0) contentBlocksHtml += `<div class="border-t border-black/20 my-1 pt-1"></div>`;
                             blockLines.forEach((lineText, lIdx) => {
-                                if (lIdx === 0) {
-                                    blockInnerHtml += `<div class="font-bold text-[10px]">${lineText}</div>`;
-                                } else {
-                                    blockInnerHtml += `<div class="text-[9px] opacity-90">${lineText}</div>`;
-                                }
+                                contentBlocksHtml += lIdx === 0 ? `<div class="font-bold text-[10px]">${lineText}</div>` : `<div class="text-[9px] opacity-90">${lineText}</div>`;
                             });
-
-                            if (bIdx > 0) {
-                                contentBlocksHtml += `<div class="border-t border-black/20 my-1 pt-1"></div>`;
-                            }
-                            contentBlocksHtml += `<div>${blockInnerHtml}</div>`;
                         });
-
                         incomeBoxHtml = `
-                            <div class="mt-1 p-1.5 rounded-lg border text-[10px] shadow-xs ${calcResult.blocks.some(b => b[0] === 'Off' || b[0] === 'Vac') && calcResult.blocks.length === 1 ? 'bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950' : 'bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950'}">
-                                <div class="space-y-0.5">
-                                    ${contentBlocksHtml}
-                                </div>
-                                ${dailyTotal > 0 ? `<div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">${dailyTotal.toLocaleString()} บาท</div>` : ''}
+                            <div class="mt-1 p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950">
+                                <div class="space-y-0.5">${contentBlocksHtml}</div>
+                                ${calcResult.total > 0 ? `<div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">${calcResult.total.toLocaleString()} บาท</div>` : ''}
                             </div>
                         `;
                     }
@@ -560,127 +459,51 @@
 
                 cell.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs font-semibold text-slate-700">${day}</span>
-                        </div>
-                        <div>
-                            ${shiftBadgesHtml}
-                        </div>
+                        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold text-slate-700">${day}</span></div>
+                        <div>${shiftBadgesHtml}</div>
                     </div>
-                    <div class="mt-auto">
-                        ${incomeBoxHtml}
-                    </div>
+                    <div class="mt-auto">${incomeBoxHtml}</div>
                 `;
                 grid.appendChild(cell);
             }
 
-            const totalMonthly = regularTotalMonthly + coloTotalMonthly;
             document.getElementById('regular-income').innerText = `${regularTotalMonthly.toLocaleString()} บาท`;
             document.getElementById('colo-income').innerText = `${coloTotalMonthly.toLocaleString()} บาท`;
-            document.getElementById('total-income').innerText = `${totalMonthly.toLocaleString()} บาท`;
+            document.getElementById('total-income').innerText = `${(regularTotalMonthly + coloTotalMonthly).toLocaleString()} บาท`;
 
             renderSummaryTables(regularStats, coloStats);
         }
 
         function renderSummaryTables(regularStats, coloStats) {
             const formatEntries = (arr) => arr.map(e => `[${e}]`).join(', ');
-
-            const tbodyReg = document.getElementById('summary-table-regular');
-            tbodyReg.innerHTML = `
-                <tr>
-                    <td class="p-3 font-semibold text-slate-700">Obs</td>
-                    <td class="p-3 text-center font-medium">${regularStats.obs.count}</td>
-                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td>
-                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.obs.entries)}</td>
-                </tr>
-                <tr>
-                    <td class="p-3 font-semibold text-slate-700">On Call</td>
-                    <td class="p-3 text-center font-medium">${regularStats.oncall.count}</td>
-                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td>
-                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.oncall.entries)}</td>
-                </tr>
-                <tr>
-                    <td class="p-3 font-semibold text-slate-700">OT</td>
-                    <td class="p-3 text-center font-medium">${regularStats.ot.count}</td>
-                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td>
-                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.ot.entries)}</td>
-                </tr>
-                <tr>
-                    <td class="p-3 font-semibold text-slate-700">Major</td>
-                    <td class="p-3 text-center font-medium">${regularStats.major.count}</td>
-                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td>
-                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.major.entries)}</td>
-                </tr>
-                <tr>
-                    <td class="p-3 font-semibold text-slate-700">Minor</td>
-                    <td class="p-3 text-center font-medium">${regularStats.minor.count}</td>
-                    <td class="p-3 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td>
-                    <td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td>
-                </tr>
+            document.getElementById('summary-table-regular').innerHTML = `
+                <tr><td class="p-3 font-semibold text-slate-700">Obs</td><td class="p-3 text-center font-medium">${regularStats.obs.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.obs.entries)}</td></tr>
+                <tr><td class="p-3 font-semibold text-slate-700">On Call</td><td class="p-3 text-center font-medium">${regularStats.oncall.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.oncall.entries)}</td></tr>
+                <tr><td class="p-3 font-semibold text-slate-700">OT</td><td class="p-3 text-center font-medium">${regularStats.ot.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.ot.entries)}</td></tr>
+                <tr><td class="p-3 font-semibold text-slate-700">Major</td><td class="p-3 text-center font-medium">${regularStats.major.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.major.entries)}</td></tr>
+                <tr><td class="p-3 font-semibold text-slate-700">Minor</td><td class="p-3 text-center font-medium">${regularStats.minor.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td></tr>
             `;
-
-            const tbodyColo = document.getElementById('summary-table-colo');
-            tbodyColo.innerHTML = `
-                <tr>
-                    <td class="p-3 font-semibold text-slate-700">OT</td>
-                    <td class="p-3 text-center font-medium">${coloStats.ot.count}</td>
-                    <td class="p-3 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td>
-                    <td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.ot.entries)}</td>
-                </tr>
-                <tr>
-                    <td class="p-3 font-semibold text-slate-700">Major</td>
-                    <td class="p-3 text-center font-medium">${coloStats.major.count}</td>
-                    <td class="p-3 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td>
-                    <td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.major.entries)}</td>
-                </tr>
-                <tr>
-                    <td class="p-3 font-semibold text-slate-700">Minor</td>
-                    <td class="p-3 text-center font-medium">${coloStats.minor.count}</td>
-                    <td class="p-3 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td>
-                    <td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td>
-                </tr>
+            document.getElementById('summary-table-colo').innerHTML = `
+                <tr><td class="p-3 font-semibold text-slate-700">OT</td><td class="p-3 text-center font-medium">${coloStats.ot.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.ot.entries)}</td></tr>
+                <tr><td class="p-3 font-semibold text-slate-700">Major</td><td class="p-3 text-center font-medium">${coloStats.major.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.major.entries)}</td></tr>
+                <tr><td class="p-3 font-semibold text-slate-700">Minor</td><td class="p-3 text-center font-medium">${coloStats.minor.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td></tr>
             `;
         }
 
-        function changeMonth(direction) {
-            currentDate.setMonth(currentDate.getMonth() + direction);
-            renderCalendar();
-        }
-
-        function goToCurrentMonth() {
-            currentDate = new Date();
-            renderCalendar();
-        }
+        function changeMonth(direction) { currentDate.setMonth(currentDate.getMonth() + direction); renderCalendar(); }
+        function goToCurrentMonth() { currentDate = new Date(); renderCalendar(); }
 
         function openModal(dateStr) {
             selectedDateStr = dateStr;
             const parts = dateStr.split('-');
             document.getElementById('modal-date-title').innerText = `จัดการเวรวันที่ ${parseInt(parts[2])} ${monthNames[parseInt(parts[1])-1]} ${parseInt(parts[0])+543}`;
-            
             const existing = shiftsData[dateStr] || { shiftDetails: [] };
+            let details = existing.shiftDetails || [];
 
-            let details = [];
-            if (existing.shiftDetails && Array.isArray(existing.shiftDetails)) {
-                details = existing.shiftDetails;
-            } else if (existing.shifts) {
-                details = existing.shifts.map(s => ({
-                    shift: s === 'C' ? 'Colonoscope' : s,
-                    obs: !!existing.obs,
-                    oncall: !!existing.oncall,
-                    major: existing.major || 0,
-                    minor: existing.minor || 0,
-                    note: existing.note || ''
-                }));
-            }
-
-            const shiftCheckboxes = document.querySelectorAll('input[name="shift-option"]');
-            shiftCheckboxes.forEach(cb => {
-                const found = details.find(d => d.shift === cb.value);
-                cb.checked = !!found;
+            document.querySelectorAll('input[name="shift-option"]').forEach(cb => {
+                cb.checked = !!details.find(d => d.shift === cb.value);
             });
-
             renderShiftIncomeInputs(details);
-
             document.getElementById('shift-modal').classList.remove('hidden');
             document.getElementById('shift-modal').classList.add('flex');
         }
@@ -688,15 +511,8 @@
         function handleShiftSelectionChange() {
             const currentDetails = gatherModalDetailsFromUI();
             const selectedShifts = [];
-            document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => {
-                selectedShifts.push(cb.value);
-            });
-
-            let newDetails = selectedShifts.map(s => {
-                const existing = currentDetails.find(d => d.shift === s);
-                return existing || { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' };
-            });
-
+            document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => selectedShifts.push(cb.value));
+            let newDetails = selectedShifts.map(s => currentDetails.find(d => d.shift === s) || { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' });
             renderShiftIncomeInputs(newDetails);
             updatePreviewTotal();
         }
@@ -704,7 +520,6 @@
         function renderShiftIncomeInputs(details) {
             const container = document.getElementById('shift-incomes-container');
             container.innerHTML = '';
-
             if (details.length === 0) {
                 container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อกำหนดรายได้หรือรายละเอียด</div>';
                 updatePreviewTotal();
@@ -722,143 +537,93 @@
                 const isOffVac = (item.shift === 'Off' || item.shift === 'Vacation');
                 const div = document.createElement('div');
                 div.className = 'p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
-                div.setAttribute('data-shift-card-index', index);
                 
                 if (isOffVac) {
                     div.innerHTML = `
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                            <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
-                        </div>
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5"><span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span></div>
                         <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
                             <label class="block text-[10px] font-semibold text-slate-700 mb-1">รายละเอียดเพิ่มเติม</label>
-                            <input type="text" data-shift-idx="${index}" data-field="note" placeholder="กรอกรายละเอียด..." value="${item.note || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+                            <input type="text" data-field="note" placeholder="กรอกรายละเอียด..." value="${item.note || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
                         </div>
                     `;
                 } else {
-                    const currentCalculatedIncome = calculateShiftIncome(item);
-                    let extraInputsHtml = '';
-                    if (item.shift !== 'Colonoscope') {
-                        extraInputsHtml = `
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
-                                    <input type="checkbox" data-shift-idx="${index}" data-field="obs" ${item.obs ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600 focus:ring-sky-500">
-                                    <div class="text-xs">
-                                        <span class="font-semibold text-slate-700">Obs</span> 
-                                        <span class="text-slate-400">(88 ฿)</span>
-                                    </div>
-                                </label>
-                                <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
-                                    <input type="checkbox" data-shift-idx="${index}" data-field="oncall" ${item.oncall ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600 focus:ring-sky-500">
-                                    <div class="text-xs">
-                                        <span class="font-semibold text-slate-700">On Call</span> 
-                                        <span class="text-slate-400">(142 ฿)</span>
-                                    </div>
-                                </label>
-                            </div>
-                        `;
-                    }
-
+                    const subtotal = calculateShiftIncome(item);
                     div.innerHTML = `
                         <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
                             <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
-                            <span class="text-xs font-bold text-slate-700 shift-subtotal-display">${currentCalculatedIncome.toLocaleString()} บาท</span>
+                            <span class="text-xs font-bold text-slate-700 shift-subtotal-display">${subtotal.toLocaleString()} บาท</span>
                         </div>
-                        ${extraInputsHtml}
+                        ${item.shift !== 'Colonoscope' ? `
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
+                                    <input type="checkbox" data-field="obs" ${item.obs ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600">
+                                    <div class="text-xs"><span class="font-semibold text-slate-700">Obs</span> <span class="text-slate-400">(88 ฿)</span></div>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
+                                    <input type="checkbox" data-field="oncall" ${item.oncall ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600">
+                                    <div class="text-xs"><span class="font-semibold text-slate-700">On Call</span> <span class="text-slate-400">(142 ฿)</span></div>
+                                </label>
+                            </div>
+                        ` : ''}
                         <div class="grid grid-cols-2 gap-2 pt-1">
                             <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
                                 <label class="block text-[10px] font-semibold text-slate-700 mb-1">Major (250 ฿)</label>
-                                <input type="number" data-shift-idx="${index}" data-field="major" min="0" placeholder="" value="${item.major !== undefined && item.major !== 0 ? item.major : ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                                <input type="number" data-field="major" min="0" value="${item.major || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:outline-none">
                             </div>
                             <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
                                 <label class="block text-[10px] font-semibold text-slate-700 mb-1">Minor (130 ฿)</label>
-                                <input type="number" data-shift-idx="${index}" data-field="minor" min="0" placeholder="" value="${item.minor !== undefined && item.minor !== 0 ? item.minor : ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                                <input type="number" data-field="minor" min="0" value="${item.minor || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:outline-none">
                             </div>
                         </div>
                     `;
                 }
                 container.appendChild(div);
             });
-
             updatePreviewTotal();
         }
 
         function onShiftIncomeInputChanged() {
-            const containers = document.querySelectorAll('#shift-incomes-container > div');
-            containers.forEach(div => {
+            document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
                 const badge = div.querySelector('span');
                 if (!badge) return;
                 const shiftName = badge.innerText.replace('เวร: ', '').trim();
-
                 if (shiftName === 'Off' || shiftName === 'Vacation') return;
-
-                const obsCb = div.querySelector('input[data-field="obs"]');
-                const oncallCb = div.querySelector('input[data-field="oncall"]');
-                const majorIn = div.querySelector('input[data-field="major"]');
-                const minorIn = div.querySelector('input[data-field="minor"]');
 
                 const tempItem = {
                     shift: shiftName,
-                    obs: obsCb ? obsCb.checked : false,
-                    oncall: oncallCb ? oncallCb.checked : false,
-                    major: majorIn && majorIn.value !== '' ? parseInt(majorIn.value) || 0 : 0,
-                    minor: minorIn && minorIn.value !== '' ? parseInt(minorIn.value) || 0 : 0
+                    obs: div.querySelector('input[data-field="obs"]')?.checked || false,
+                    oncall: div.querySelector('input[data-field="oncall"]')?.checked || false,
+                    major: parseInt(div.querySelector('input[data-field="major"]')?.value) || 0,
+                    minor: parseInt(div.querySelector('input[data-field="minor"]')?.value) || 0
                 };
-
-                const subtotal = calculateShiftIncome(tempItem);
-                const subtotalDisplay = div.querySelector('.shift-subtotal-display');
-                if (subtotalDisplay) {
-                    subtotalDisplay.innerText = `${subtotal.toLocaleString()} บาท`;
-                }
+                div.querySelector('.shift-subtotal-display').innerText = `${calculateShiftIncome(tempItem).toLocaleString()} บาท`;
             });
-
             updatePreviewTotal();
         }
 
         function gatherModalDetailsFromUI() {
-            const containers = document.querySelectorAll('#shift-incomes-container > div');
             let details = [];
-
-            containers.forEach(div => {
+            document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
                 const badge = div.querySelector('span');
                 if (!badge) return;
                 const shiftName = badge.innerText.replace('เวร: ', '').trim();
-
                 if (shiftName === 'Off' || shiftName === 'Vacation') {
-                    const noteIn = div.querySelector('input[data-field="note"]');
-                    details.push({
-                        shift: shiftName,
-                        note: noteIn ? noteIn.value : ''
-                    });
+                    details.push({ shift: shiftName, note: div.querySelector('input[data-field="note"]')?.value || '' });
                 } else {
-                    const obsCb = div.querySelector('input[data-field="obs"]');
-                    const oncallCb = div.querySelector('input[data-field="oncall"]');
-                    const majorIn = div.querySelector('input[data-field="major"]');
-                    const minorIn = div.querySelector('input[data-field="minor"]');
-
                     details.push({
                         shift: shiftName,
-                        obs: obsCb ? obsCb.checked : false,
-                        oncall: oncallCb ? oncallCb.checked : false,
-                        major: majorIn && majorIn.value !== '' ? parseInt(majorIn.value) || 0 : 0,
-                        minor: minorIn && minorIn.value !== '' ? parseInt(minorIn.value) || 0 : 0
+                        obs: div.querySelector('input[data-field="obs"]')?.checked || false,
+                        oncall: div.querySelector('input[data-field="oncall"]')?.checked || false,
+                        major: parseInt(div.querySelector('input[data-field="major"]')?.value) || 0,
+                        minor: parseInt(div.querySelector('input[data-field="minor"]')?.value) || 0
                     });
                 }
             });
-
-            if (containers.length === 0) {
-                document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => {
-                    details.push({ shift: cb.value, obs: false, oncall: false, major: 0, minor: 0, note: '' });
-                });
-            }
-
             return details;
         }
 
         function updatePreviewTotal() {
-            const details = gatherModalDetailsFromUI();
-            const tempSimData = { shiftDetails: details };
-            const res = calculateDayDetails(tempSimData);
-            document.getElementById('preview-daily-total').innerText = `${res.total.toLocaleString()} บาท`;
+            document.getElementById('preview-daily-total').innerText = `${calculateDayDetails({ shiftDetails: gatherModalDetailsFromUI() }).total.toLocaleString()} บาท`;
         }
 
         function closeModal() {
@@ -867,27 +632,24 @@
             selectedDateStr = null;
         }
 
-        function saveShift() {
+        async function saveShift() {
             if (!selectedDateStr) return;
-
             const details = gatherModalDetailsFromUI();
-            let hasData = details.length > 0 && details.some(d => d.shift || d.obs || d.oncall || d.major > 0 || d.minor > 0 || d.note);
-
-            if (!hasData) {
+            if (details.length === 0) {
                 delete shiftsData[selectedDateStr];
+                await window.deleteCloudShift(selectedDateStr);
             } else {
                 shiftsData[selectedDateStr] = { shiftDetails: details };
+                await window.saveCloudShift(selectedDateStr, { shiftDetails: details });
             }
-
-            saveToStorage();
             closeModal();
             renderCalendar();
         }
 
-        function deleteShift() {
+        async function deleteShift() {
             if (!selectedDateStr) return;
             delete shiftsData[selectedDateStr];
-            saveToStorage();
+            await window.deleteCloudShift(selectedDateStr);
             closeModal();
             renderCalendar();
         }
