@@ -23,7 +23,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // นำฟังก์ชันไปผูกกับ window เพื่อให้เรียกใช้งานจากปุ่มใน HTML ได้
         window.loadCloudData = async function() {
             try {
                 const querySnapshot = await getDocs(collection(db, "nurse_shifts"));
@@ -52,7 +51,6 @@
             }
         };
 
-        // โหลดข้อมูลทันทีเมื่อเปิดเว็บ
         window.loadCloudData();
     </script>
     <style>
@@ -166,11 +164,20 @@
     <!-- Modal -->
     <div id="shift-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 id="modal-date-title" class="text-lg font-bold text-slate-800 mb-4">จัดการเวรประจำวัน</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-date-title" class="text-lg font-bold text-slate-800">จัดการเวรประจำวัน</h3>
+            </div>
             
             <div class="space-y-5">
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <label class="block text-sm font-bold text-slate-700 mb-2">📌 เวร (เลือกได้มากกว่า 1)</label>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative">
+                    <!-- ปุ่มไอคอน 📞 ย้ายมาไว้ที่มุมขวาบนของกรอบเวร และเอาคำว่าโทรออกเหลือแต่ไอคอน -->
+                    <div class="absolute top-4 right-4">
+                        <button type="button" id="modal-call-toggle-btn" onclick="toggleModalCallFlag()" class="w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs">
+                            📞
+                        </button>
+                    </div>
+
+                    <label class="block text-sm font-bold text-slate-700 mb-2">📌 เวร</label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         <label class="flex items-center gap-2 p-2.5 bg-slate-200 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-300 transition">
                             <input type="checkbox" name="shift-option" value="ดึก" onchange="handleShiftSelectionChange()" class="rounded text-slate-700 focus:ring-slate-500">
@@ -223,6 +230,7 @@
         let currentDate = new Date();
         let selectedDateStr = null;
         let shiftsData = {};
+        let modalCallChecked = false;
 
         function initCalendar() {
             renderCalendar();
@@ -299,7 +307,6 @@
                 let abbr = getShiftAbbr(sName);
 
                 if (isOff || isVac) {
-                    // เงื่อนไข: ถ้าเป็น off หรือ vacation แต่ไม่มีการกรอกข้อมูล (note ว่าง) ไม่ต้องใส่ลง blocks
                     if (item.note && item.note.trim() !== '') {
                         blocks.push({
                             type: 'green',
@@ -337,7 +344,6 @@
 
                 let shiftIncome = adjustedMM + (isObs ? 88 : 0) + (isOncall ? 142 : 0);
 
-                // เงื่อนไข: เวรทำการหรือ colono ถ้ายังไม่มีการกรอกรายได้ (รายได้เป็น 0 และไม่มี obs/oncall/major/minor) ไม่ต้องมีกรอบข้อความขึ้นมา
                 let hasIncomeData = (shiftIncome > 0 || isObs || isOncall || activeM > 0 || activeMi > 0);
                 if (!hasIncomeData) {
                     detailsPerShift.push({
@@ -360,7 +366,6 @@
                 if (activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
                 if (shiftOt > 0) shiftLines.push('OT');
 
-                // แยกประเภทกรอบ: เวร Colonoscope ใช้สีเงิน, เวรทำการใชสีทอง
                 blocks.push({
                     type: isColo ? 'silver' : 'gold',
                     lines: shiftLines,
@@ -417,13 +422,6 @@
                 cell.className = `bg-white min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 cell.onclick = () => openModal(dateStr);
 
-                let shiftNames = [];
-                if (dayData) {
-                    let rawList = dayData.shiftDetails || [];
-                    const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
-                    shiftNames = rawList.map(i => i.shift).sort((a, b) => (shiftOrder[a] || 99) - (shiftOrder[b] || 99));
-                }
-
                 let shiftBadgesHtml = '';
                 let incomeBoxHtml = '';
 
@@ -443,23 +441,31 @@
                         } else {
                             if (ds.ot) { coloStats.ot.count += 1; coloStats.ot.total += 710; coloStats.ot.entries.push(`${day}${ds.abbr}`); }
                             if (ds.major > 0) { coloStats.major.count += ds.major; coloStats.major.total += (ds.major * 250); coloStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
-                            if (ds.minor > 0) { coloStats.minor.count += ds.minor; coloStats.minor.total += (ds.minor * 130); coloStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.major}`); } // fixed typo in original code if any, keeping robust
+                            if (ds.minor > 0) { coloStats.minor.count += ds.minor; coloStats.minor.total += (ds.minor * 130); coloStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
                         }
                     });
 
-                    if (shiftNames.length > 0) {
+                    let rawList = dayData.shiftDetails || [];
+                    const shiftOrderIndex = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
+                    let sortedNames = rawList.map(i => i.shift).sort((a, b) => (shiftOrderIndex[a] || 99) - (shiftOrderIndex[b] || 99));
+
+                    if (sortedNames.length > 0 || dayData.isCall) {
                         shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mb-1">';
-                        shiftNames.forEach(s => {
+                        sortedNames.forEach(s => {
                             let badgeStyle = 'bg-slate-100 text-slate-800 border-slate-300';
                             let displayLabel = s;
                             if (s === 'เช้า') badgeStyle = 'bg-sky-100 text-sky-800 border-sky-300';
-                            else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-300';
+                            else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-200';
                             else if (s === 'ดึก') badgeStyle = 'bg-slate-200 text-slate-800 border-slate-400';
                             else if (s === 'Colonoscope') { badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300'; displayLabel = 'C'; }
                             else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'Off'; }
                             else if (s === 'Vacation') { badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold'; displayLabel = 'Vac'; }
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
+
+                        if (dayData.isCall) {
+                            shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
+                        }
                         shiftBadgesHtml += '</div>';
                     }
 
@@ -468,16 +474,12 @@
                         calcResult.blocks.forEach((block, bIdx) => {
                             if (bIdx > 0) contentBlocksHtml += `<div class="border-t border-black/20 my-1 pt-1"></div>`;
                             
-                            // กำหนดสไตล์ไล่เฉดสีตามประเภทกรอบ
                             let boxStyle = '';
                             if (block.type === 'gold') {
-                                // เวรทำการ: กรอบสีทอง
                                 boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950';
                             } else if (block.type === 'silver') {
-                                // เวร Colonoscope: กรอบสีเงิน
                                 boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-slate-100 via-slate-200 to-slate-300 border-slate-300 text-slate-900';
                             } else if (block.type === 'green') {
-                                // เวร Off / Vacation: กรอบสีเขียว
                                 boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950';
                             }
 
@@ -537,8 +539,11 @@
             selectedDateStr = dateStr;
             const parts = dateStr.split('-');
             document.getElementById('modal-date-title').innerText = `จัดการเวรวันที่ ${parseInt(parts[2])} ${monthNames[parseInt(parts[1])-1]} ${parseInt(parts[0])+543}`;
-            const existing = shiftsData[dateStr] || { shiftDetails: [] };
+            const existing = shiftsData[dateStr] || { shiftDetails: [], isCall: false };
             let details = existing.shiftDetails || [];
+            
+            modalCallChecked = !!existing.isCall;
+            updateModalCallButtonUI();
 
             document.querySelectorAll('input[name="shift-option"]').forEach(cb => {
                 cb.checked = !!details.find(d => d.shift === cb.value);
@@ -546,6 +551,20 @@
             renderShiftIncomeInputs(details);
             document.getElementById('shift-modal').classList.remove('hidden');
             document.getElementById('shift-modal').classList.add('flex');
+        }
+
+        function toggleModalCallFlag() {
+            modalCallChecked = !modalCallChecked;
+            updateModalCallButtonUI();
+        }
+
+        function updateModalCallButtonUI() {
+            const btn = document.getElementById('modal-call-toggle-btn');
+            if (modalCallChecked) {
+                btn.className = "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-slate-300 border-slate-400 text-slate-900 flex items-center justify-center shadow-xs";
+            } else {
+                btn.className = "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs";
+            }
         }
 
         function handleShiftSelectionChange() {
@@ -675,12 +694,14 @@
         async function saveShift() {
             if (!selectedDateStr) return;
             const details = gatherModalDetailsFromUI();
-            if (details.length === 0) {
+            
+            if (details.length === 0 && !modalCallChecked) {
                 delete shiftsData[selectedDateStr];
                 await window.deleteCloudShift(selectedDateStr);
             } else {
-                shiftsData[selectedDateStr] = { shiftDetails: details };
-                await window.saveCloudShift(selectedDateStr, { shiftDetails: details });
+                const dataToSave = { shiftDetails: details, isCall: modalCallChecked };
+                shiftsData[selectedDateStr] = dataToSave;
+                await window.saveCloudShift(selectedDateStr, dataToSave);
             }
             closeModal();
             renderCalendar();
