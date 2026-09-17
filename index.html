@@ -394,7 +394,6 @@
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
-            const prevMonthTotalDays = new Date(year, month, 0).getDate();
 
             const totalCells = Math.ceil((firstDayIndex + totalDays) / 7) * 7;
             const nextMonthDaysCount = totalCells - (firstDayIndex + totalDays);
@@ -408,16 +407,11 @@
             let regularStats = { obs: { count: 0, total: 0, entries: [] }, oncall: { count: 0, total: 0, entries: [] }, ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
             let coloStats = { ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
 
-            // 1. วันของเดือนก่อนหน้า (BG สีดำเข้ม)
+            // 1. วันของเดือนก่อนหน้า (BG สีขาว และไม่มีเส้นแบ่ง/ตัวเลข)
             for (let i = firstDayIndex - 1; i >= 0; i--) {
-                const dayNum = prevMonthTotalDays - i;
                 const cell = document.createElement('div');
-                cell.className = 'bg-slate-900 min-h-[140px] p-2 flex flex-col justify-between opacity-70';
-                cell.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold text-slate-500">${dayNum}</span></div>
-                    </div>
-                `;
+                cell.className = 'bg-white min-h-[140px] p-2';
+                cell.innerHTML = ``;
                 grid.appendChild(cell);
             }
 
@@ -521,15 +515,11 @@
                 grid.appendChild(cell);
             }
 
-            // 3. วันของเดือนถัดไป (BG สีดำเข้ม)
+            // 3. วันของเดือนถัดไป (BG สีขาว และไม่มีเส้นแบ่ง/ตัวเลข เช่นกัน)
             for (let day = 1; day <= nextMonthDaysCount; day++) {
                 const cell = document.createElement('div');
-                cell.className = 'bg-slate-900 min-h-[140px] p-2 flex flex-col justify-between opacity-70';
-                cell.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold text-slate-500">${day}</span></div>
-                    </div>
-                `;
+                cell.className = 'bg-white min-h-[140px] p-2';
+                cell.innerHTML = ``;
                 grid.appendChild(cell);
             }
 
