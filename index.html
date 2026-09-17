@@ -299,7 +299,10 @@
                 let abbr = getShiftAbbr(sName);
 
                 if (isOff || isVac) {
-                    blocks.push([displayShiftName, item.note || '']);
+                    // ตรวจสอบเงื่อนไข: ถ้ามีข้อความ (note) ถึงจะเก็บลง blocks เพื่อแสดงผล
+                    if (item.note && item.note.trim() !== '') {
+                        blocks.push({ type: 'offvac', lines: [displayShiftName, item.note.trim()] });
+                    }
                     detailsPerShift.push({ shift: sName, isColo: false, isOffVac: true, abbr, note: item.note || '' });
                     return;
                 }
@@ -342,7 +345,7 @@
                 if (activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
                 if (shiftOt > 0) shiftLines.push('OT');
 
-                blocks.push(shiftLines);
+                blocks.push({ type: isColo ? 'colo' : 'regular', lines: shiftLines, income: shiftIncome });
 
                 detailsPerShift.push({
                     shift: sName, isColo, isOffVac: false, abbr,
@@ -402,7 +405,7 @@
                 }
 
                 let shiftBadgesHtml = '';
-                let incomeBoxHtml = '';
+                let incomeBoxesHtml = '';
 
                 if (dayData) {
                     const calcResult = calculateDayDetails(dayData);
@@ -441,19 +444,29 @@
                     }
 
                     if (calcResult.blocks.length > 0) {
-                        let contentBlocksHtml = '';
-                        calcResult.blocks.forEach((blockLines, bIdx) => {
-                            if (bIdx > 0) contentBlocksHtml += `<div class="border-t border-black/20 my-1 pt-1"></div>`;
-                            blockLines.forEach((lineText, lIdx) => {
-                                contentBlocksHtml += lIdx === 0 ? `<div class="font-bold text-[10px]">${lineText}</div>` : `<div class="text-[9px] opacity-90">${lineText}</div>`;
+                        calcResult.blocks.forEach((block) => {
+                            let contentLinesHtml = '';
+                            block.lines.forEach((lineText, lIdx) => {
+                                contentLinesHtml += lIdx === 0 ? `<div class="font-bold text-[10px]">${lineText}</div>` : `<div class="text-[9px] opacity-90">${lineText}</div>`;
                             });
+
+                            // กำหนดสไตล์กรอบตามประเภทเวร
+                            let boxStyle = '';
+                            if (block.type === 'regular') {
+                                boxStyle = 'bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950';
+                            } else if (block.type === 'colo') {
+                                boxStyle = 'bg-gradient-to-b from-slate-100 via-slate-200 to-zinc-300 border-slate-300 text-slate-900';
+                            } else if (block.type === 'offvac') {
+                                boxStyle = 'bg-gradient-to-b from-emerald-50 via-emerald-100 to-teal-200 border-emerald-300 text-emerald-950';
+                            }
+
+                            incomeBoxesHtml += `
+                                <div class="mt-1 p-1.5 rounded-lg border text-[10px] shadow-xs ${boxStyle}">
+                                    <div class="space-y-0.5">${contentLinesHtml}</div>
+                                    ${block.income !== undefined && block.income > 0 ? `<div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">${block.income.toLocaleString()} บาท</div>` : ''}
+                                </div>
+                            `;
                         });
-                        incomeBoxHtml = `
-                            <div class="mt-1 p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950">
-                                <div class="space-y-0.5">${contentBlocksHtml}</div>
-                                ${calcResult.total > 0 ? `<div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">${calcResult.total.toLocaleString()} บาท</div>` : ''}
-                            </div>
-                        `;
                     }
                 }
 
@@ -462,7 +475,7 @@
                         <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold text-slate-700">${day}</span></div>
                         <div>${shiftBadgesHtml}</div>
                     </div>
-                    <div class="mt-auto">${incomeBoxHtml}</div>
+                    <div class="mt-auto space-y-1">${incomeBoxesHtml}</div>
                 `;
                 grid.appendChild(cell);
             }
@@ -542,7 +555,7 @@
                     div.innerHTML = `
                         <div class="flex items-center justify-between border-b border-slate-100 pb-1.5"><span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span></div>
                         <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
-                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">รายละเอียดเพิ่มเติม</label>
+                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">รายละเอียดเพิ่มเติม (ถ้าเว้นว่างจะไม่แสดงกล่องข้อความที่ตาราง)</label>
                             <input type="text" data-field="note" placeholder="กรอกรายละเอียด..." value="${item.note || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
                         </div>
                     `;
