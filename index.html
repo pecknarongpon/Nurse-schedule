@@ -394,6 +394,11 @@
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
+            const prevMonthTotalDays = new Date(year, month, 0).getDate();
+
+            const totalCells = Math.ceil((firstDayIndex + totalDays) / 7) * 7;
+            const nextMonthDaysCount = totalCells - (firstDayIndex + totalDays);
+
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
 
@@ -403,19 +408,31 @@
             let regularStats = { obs: { count: 0, total: 0, entries: [] }, oncall: { count: 0, total: 0, entries: [] }, ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
             let coloStats = { ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
 
-            for (let i = 0; i < firstDayIndex; i++) {
-                const emptyCell = document.createElement('div');
-                emptyCell.className = 'bg-slate-50 min-h-[140px] opacity-40';
-                grid.appendChild(emptyCell);
+            // 1. วันของเดือนก่อนหน้า (BG สีดำเข้ม)
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const dayNum = prevMonthTotalDays - i;
+                const cell = document.createElement('div');
+                cell.className = 'bg-slate-900 min-h-[140px] p-2 flex flex-col justify-between opacity-70';
+                cell.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold text-slate-500">${dayNum}</span></div>
+                    </div>
+                `;
+                grid.appendChild(cell);
             }
 
+            // 2. วันของเดือนปัจจุบัน
             for (let day = 1; day <= totalDays; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = shiftsData[dateStr];
+                const currentDateObj = new Date(year, month, day);
+                const dayOfWeek = currentDateObj.getDay();
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const isToday = (day === todayObj.getDate() && month === todayObj.getMonth() && year === todayObj.getFullYear());
 
                 const cell = document.createElement('div');
-                cell.className = `bg-white min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
+                const bgClass = isWeekend ? 'bg-slate-100/90' : 'bg-white';
+                cell.className = `${bgClass} min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 
                 cell.ondblclick = () => openModal(dateStr);
 
@@ -469,7 +486,6 @@
                     if (calcResult.blocks.length > 0) {
                         let contentBlocksHtml = '';
                         calcResult.blocks.forEach((block, bIdx) => {
-                            // ลบเส้นคั่นระหว่างเวรออก โดยนำ border-t ออกแล้วเปลี่ยนระยะห่างเป็น space-y แทน
                             let boxStyle = '';
                             if (block.type === 'gold') {
                                 boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950';
@@ -497,10 +513,22 @@
 
                 cell.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold text-slate-700">${day}</span></div>
+                        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold ${isWeekend ? 'text-rose-600' : 'text-slate-700'}">${day}</span></div>
                         <div>${shiftBadgesHtml}</div>
                     </div>
                     <div class="mt-auto">${incomeBoxHtml}</div>
+                `;
+                grid.appendChild(cell);
+            }
+
+            // 3. วันของเดือนถัดไป (BG สีดำเข้ม)
+            for (let day = 1; day <= nextMonthDaysCount; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'bg-slate-900 min-h-[140px] p-2 flex flex-col justify-between opacity-70';
+                cell.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold text-slate-500">${day}</span></div>
+                    </div>
                 `;
                 grid.appendChild(cell);
             }
