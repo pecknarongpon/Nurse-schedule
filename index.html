@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ตารางเวร ณรงค์พล มั่นคง วิสัญญีพยาบาล</title>
+    <title>ตารางเวร & รายได้ ณรงค์พล มั่นคง วิสัญญีพยาบาล</title>
     <link rel="apple-touch-icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+        
         const firebaseConfig = {
-          apiKey: "AIzaSyBxGPPWsH7bQ22khU8hdY0HL-zgptnC-zI",
-          authDomain: "nurse-shift-app-bb2ab.firebaseapp.com",
-          projectId: "nurse-shift-app-bb2ab",
-          storageBucket: "nurse-shift-app-bb2ab.firebasestorage.app",
-          messagingSenderId: "622756187470",
-          appId: "1:622756187470:web:6384311aed4dd3ce74621f"
+            apiKey: "AIzaSyBxGPPWsH7bQ22khU8hdY0HL-zgptnC-zI",
+            authDomain: "nurse-shift-app-bb2ab.firebaseapp.com",
+            projectId: "nurse-shift-app-bb2ab",
+            storageBucket: "nurse-shift-app-bb2ab.firebasestorage.app",
+            messagingSenderId: "622756187470",
+            appId: "1:622756187470:web:6384311aed4dd3ce74621f"
         };
-
+        
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -29,7 +29,7 @@
                 querySnapshot.forEach((docSnap) => {
                     shiftsData[docSnap.id] = docSnap.data();
                 });
-                renderCalendar();
+                renderAll();
             } catch (e) {
                 console.error("Error loading cloud data: ", e);
             }
@@ -63,100 +63,131 @@
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
-
     <div class="max-w-5xl mx-auto p-4 sm:p-6 pb-12">
-        <!-- Header -->
-        <header class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-            <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-sky-700 mb-1">
-                    🗓️ ตารางเวร | Anesthesia
-                </h1>
-                <p class="text-lg font-bold text-slate-700">
-                    🩺 ณรงค์พล มั่นคง
-                </p>
-                <p class="text-sm font-light text-slate-500">
-                    💉 วิสัญญีพยาบาล
-                </p>
+        <!-- Tab Navigation Header -->
+        <div class="flex justify-center mb-6">
+            <div class="inline-flex bg-slate-200 p-1.5 rounded-2xl shadow-inner gap-2">
+                <button id="tab-btn-schedule" onclick="switchTab('schedule')" class="px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm">
+                    🗓️ ตารางเวร
+                </button>
+                <button id="tab-btn-income" onclick="switchTab('income')" class="px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800">
+                    💵 รายได้
+                </button>
             </div>
-
-            <!-- 3 Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-xl p-4 text-center shadow-sm">
-                    <div class="text-xs text-amber-800 font-medium">รายได้เวรทำการ</div>
-                    <div id="regular-income" class="text-xl font-bold text-amber-900">0 บาท</div>
-                </div>
-                <div class="bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 rounded-xl p-4 text-center shadow-sm">
-                    <div class="text-xs text-slate-700 font-medium">รายได้เวร Colonoscope</div>
-                    <div id="colo-income" class="text-xl font-bold text-slate-900">0 บาท</div>
-                </div>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center shadow-sm">
-                <div class="text-xs text-emerald-700 font-medium">รายได้รวม</div>
-                <div id="total-income" class="text-2xl font-bold text-emerald-800">0 บาท</div>
-            </div>
-        </header>
-
-        <!-- Month Navigation & Controls -->
-        <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&lt;</button>
-                <div class="min-w-[200px] text-center">
-                    <h2 id="month-year-display" class="text-2xl font-bold text-slate-700">มกราคม</h2>
-                    <p id="current-date-header-display" class="text-xs text-rose-600 font-medium mt-0.5 h-4"></p>
-                </div>
-                <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&gt;</button>
-            </div>
-            <button onclick="goToCurrentMonth()" class="text-sm bg-sky-100 text-sky-700 px-4 py-2 rounded-xl font-medium hover:bg-sky-200 transition">เดือนปัจจุบัน</button>
         </div>
 
-        <!-- Calendar Grid -->
-        <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
-            <div class="grid grid-cols-7 bg-slate-100 text-center text-xs font-semibold text-slate-600 py-3 border-b border-slate-200">
-                <span class="text-red-500">อา.</span>
-                <span>จ.</span>
-                <span>อ.</span>
-                <span>พ.</span>
-                <span>พฤ.</span>
-                <span>ศ.</span>
-                <span class="text-sky-600">ส.</span>
+        <!-- TAB 1: Schedule View -->
+        <div id="tab-content-schedule" class="space-y-6">
+            <!-- Month Navigation & Controls -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&lt;</button>
+                    <div class="min-w-[200px] text-center">
+                        <h2 id="schedule-month-year-display" class="text-2xl font-bold text-slate-700">มกราคม</h2>
+                        <p id="schedule-current-date-header-display" class="text-xs text-rose-600 font-medium mt-0.5 h-4"></p>
+                    </div>
+                    <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&gt;</button>
+                </div>
+                <button onclick="goToCurrentMonth()" class="text-sm bg-sky-100 text-sky-700 px-4 py-2 rounded-xl font-medium hover:bg-sky-200 transition">เดือนปัจจุบัน</button>
             </div>
-            <div id="calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px"></div>
+
+            <!-- Calendar Grid (Schedule View) -->
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div class="grid grid-cols-7 bg-slate-100 text-center text-xs font-semibold text-slate-600 py-3 border-b border-slate-200">
+                    <span class="text-red-500">อา.</span>
+                    <span>จ.</span>
+                    <span>อ.</span>
+                    <span>พ.</span>
+                    <span>พฤ.</span>
+                    <span>ศ.</span>
+                    <span class="text-sky-600">ส.</span>
+                </div>
+                <div id="schedule-calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px"></div>
+            </div>
         </div>
 
-        <!-- Detailed Summary Tables -->
-        <div class="space-y-6">
-            <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
-                <h3 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <span>📊</span> รายละเอียด : เวรทำการ
-                </h3>
-                <table class="w-full text-left border-collapse min-w-[650px] text-sm">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs">
-                            <th class="p-3 font-semibold w-1/6">รายการ</th>
-                            <th class="p-3 font-semibold w-1/6 text-center">จำนวนรวม</th>
-                            <th class="p-3 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
-                            <th class="p-3 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
-                        </tr>
-                    </thead>
-                    <tbody id="summary-table-regular" class="divide-y divide-slate-100 text-xs"></tbody>
-                </table>
+        <!-- TAB 2: Income View -->
+        <div id="tab-content-income" class="space-y-6 hidden">
+            <!-- Header for Income -->
+            <header class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                <!-- 3 Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-xl p-4 text-center shadow-sm">
+                        <div class="text-xs text-amber-800 font-medium">รายได้เวรทำการ</div>
+                        <div id="regular-income" class="text-xl font-bold text-amber-900">0 บาท</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 rounded-xl p-4 text-center shadow-sm">
+                        <div class="text-xs text-slate-700 font-medium">รายได้เวร Colonoscope</div>
+                        <div id="colo-income" class="text-xl font-bold text-slate-900">0 บาท</div>
+                    </div>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center shadow-sm">
+                    <div class="text-xs text-emerald-700 font-medium">รายได้รวม</div>
+                    <div id="total-income" class="text-2xl font-bold text-emerald-800">0 บาท</div>
+                </div>
+            </header>
+
+            <!-- Month Navigation & Controls for Income -->
+            <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&lt;</button>
+                    <div class="min-w-[200px] text-center">
+                        <h2 id="income-month-year-display" class="text-2xl font-bold text-slate-700">มกราคม</h2>
+                        <p id="income-current-date-header-display" class="text-xs text-rose-600 font-medium mt-0.5 h-4"></p>
+                    </div>
+                    <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&gt;</button>
+                </div>
+                <button onclick="goToCurrentMonth()" class="text-sm bg-sky-100 text-sky-700 px-4 py-2 rounded-xl font-medium hover:bg-sky-200 transition">เดือนปัจจุบัน</button>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
-                <h3 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <span>📊</span> รายละเอียด : เวร Colonoscope
-                </h3>
-                <table class="w-full text-left border-collapse min-w-[650px] text-sm">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs">
-                            <th class="p-3 font-semibold w-1/6">รายการ</th>
-                            <th class="p-3 font-semibold w-1/6 text-center">จำนวนรวม</th>
-                            <th class="p-3 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
-                            <th class="p-3 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
-                        </tr>
-                    </thead>
-                    <tbody id="summary-table-colo" class="divide-y divide-slate-100 text-xs"></tbody>
-                </table>
+            <!-- Calendar Grid (Income View) -->
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+                <div class="grid grid-cols-7 bg-slate-100 text-center text-xs font-semibold text-slate-600 py-3 border-b border-slate-200">
+                    <span class="text-red-500">อา.</span>
+                    <span>จ.</span>
+                    <span>อ.</span>
+                    <span>พ.</span>
+                    <span>พฤ.</span>
+                    <span>ศ.</span>
+                    <span class="text-sky-600">ส.</span>
+                </div>
+                <div id="income-calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px"></div>
+            </div>
+
+            <!-- Detailed Summary Tables -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
+                    <h3 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <span>📊</span> รายละเอียด : เวรทำการ
+                    </h3>
+                    <table class="w-full text-left border-collapse min-w-[650px] text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs">
+                                <th class="p-3 font-semibold w-1/6">รายการ</th>
+                                <th class="p-3 font-semibold w-1/6 text-center">จำนวนรวม</th>
+                                <th class="p-3 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
+                                <th class="p-3 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summary-table-regular" class="divide-y divide-slate-100 text-xs"></tbody>
+                    </table>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm p-6 overflow-x-auto">
+                    <h3 class="text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <span>📊</span> รายละเอียด : เวร Colonoscope
+                    </h3>
+                    <table class="w-full text-left border-collapse min-w-[650px] text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs">
+                                <th class="p-3 font-semibold w-1/6">รายการ</th>
+                                <th class="p-3 font-semibold w-1/6 text-center">จำนวนรวม</th>
+                                <th class="p-3 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
+                                <th class="p-3 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summary-table-colo" class="divide-y divide-slate-100 text-xs"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -170,7 +201,6 @@
                     📞
                 </button>
             </div>
-            
             <div class="space-y-5">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <label class="block text-sm font-bold text-slate-700 mb-2">📌 เวร</label>
@@ -201,15 +231,12 @@
                         </label>
                     </div>
                 </div>
-
                 <div id="shift-incomes-container" class="space-y-4"></div>
-
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                <div id="preview-total-container" class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
                     <span class="text-xs text-amber-800 font-medium">ผลรวมเงินรายวันของวันนี้: </span>
                     <span id="preview-daily-total" class="text-lg font-bold text-amber-900">0 บาท</span>
                 </div>
             </div>
-
             <div class="flex justify-between items-center mt-6">
                 <button onclick="deleteShift()" class="text-rose-500 text-sm font-medium hover:underline">ลบข้อมูลวันนี้</button>
                 <div class="flex gap-2">
@@ -222,14 +249,40 @@
 
     <script>
         const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-        
         let currentDate = new Date();
         let selectedDateStr = null;
         let shiftsData = {};
         let modalCallChecked = false;
+        let activeTab = 'schedule'; // 'schedule' or 'income'
+
+        function switchTab(tabName) {
+            activeTab = tabName;
+            const scheduleBtn = document.getElementById('tab-btn-schedule');
+            const incomeBtn = document.getElementById('tab-btn-income');
+            const scheduleContent = document.getElementById('tab-content-schedule');
+            const incomeContent = document.getElementById('tab-content-income');
+            
+            if (tabName === 'schedule') {
+                scheduleBtn.className = "px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
+                incomeBtn.className = "px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
+                scheduleContent.classList.remove('hidden');
+                incomeContent.classList.add('hidden');
+            } else {
+                incomeBtn.className = "px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
+                scheduleBtn.className = "px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
+                incomeContent.classList.remove('hidden');
+                scheduleContent.classList.add('hidden');
+            }
+            renderAll();
+        }
 
         function initCalendar() {
-            renderCalendar();
+            renderAll();
+        }
+
+        function renderAll() {
+            renderScheduleCalendar();
+            renderIncomeCalendar();
         }
 
         function getShiftAbbr(s) {
@@ -248,14 +301,11 @@
             let isOncall = !!item.oncall;
             let mCount = parseInt(item.major) || 0;
             let miCount = parseInt(item.minor) || 0;
-
             let mTotal = mCount * 250;
             let miTotal = miCount * 130;
             let sumMM = mTotal + miTotal;
-
             let shiftOt = 0;
             let adjustedMM = 0;
-
             if (sumMM > 0) {
                 if (sumMM < 710) {
                     shiftOt = 1;
@@ -264,20 +314,18 @@
                     adjustedMM = sumMM;
                 }
             }
-
             return adjustedMM + (isObs ? 88 : 0) + (isOncall ? 142 : 0);
         }
 
         function calculateDayDetails(data) {
             if (!data) return { total: 0, blocks: [], regularTotal: 0, coloTotal: 0, detailsPerShift: [] };
-
             let totalSum = 0;
             let regularTotal = 0;
             let coloTotal = 0;
             let blocks = [];
             let detailsPerShift = [];
-
             let shiftList = [];
+            
             if (data.shiftDetails && Array.isArray(data.shiftDetails)) {
                 shiftList = data.shiftDetails;
             } else if (data.shifts) {
@@ -290,43 +338,46 @@
                     note: data.note || ''
                 }));
             }
-
+            
             const shiftOrder = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
             shiftList.sort((a, b) => (shiftOrder[a.shift] || 99) - (shiftOrder[b.shift] || 99));
-
+            
             shiftList.forEach(item => {
                 let sName = item.shift;
                 let isColo = (sName === 'Colonoscope');
                 let isOff = (sName === 'Off');
                 let isVac = (sName === 'Vacation');
-                let displayShiftName = isColo ? 'เวร C' : (isVac ? 'Vac' : sName);
+                let displayShiftName = isColo ? 'C' : (isVac ? 'Vac' : (isOff ? 'พัก' : sName));
                 let abbr = getShiftAbbr(sName);
-
+                
                 if (isOff || isVac) {
                     if (item.note && item.note.trim() !== '') {
                         blocks.push({
                             type: 'green',
                             lines: [displayShiftName, item.note.trim()]
                         });
+                    } else {
+                        blocks.push({
+                            type: 'green',
+                            lines: [displayShiftName]
+                        });
                     }
                     detailsPerShift.push({ shift: sName, isColo: false, isOffVac: true, abbr, note: item.note || '' });
                     return;
                 }
-
+                
                 let isObs = !!item.obs;
                 let isOncall = !!item.oncall;
                 let mCount = parseInt(item.major) || 0;
                 let miCount = parseInt(item.minor) || 0;
-
                 let mTotal = mCount * 250;
                 let miTotal = miCount * 130;
                 let sumMM = mTotal + miTotal;
-
                 let shiftOt = 0;
                 let activeM = 0;
                 let activeMi = 0;
                 let adjustedMM = 0;
-
+                
                 if (sumMM > 0) {
                     if (sumMM < 710) {
                         shiftOt = 1;
@@ -337,10 +388,10 @@
                         adjustedMM = sumMM;
                     }
                 }
-
+                
                 let shiftIncome = adjustedMM + (isObs ? 88 : 0) + (isOncall ? 142 : 0);
-
                 let hasIncomeData = (shiftIncome > 0 || isObs || isOncall || activeM > 0 || activeMi > 0);
+                
                 if (!hasIncomeData) {
                     detailsPerShift.push({
                         shift: sName, isColo, isOffVac: false, abbr,
@@ -349,73 +400,64 @@
                     });
                     return;
                 }
-
+                
                 totalSum += shiftIncome;
-
                 if (isColo) coloTotal += shiftIncome;
                 else regularTotal += shiftIncome;
-
+                
                 let shiftLines = [displayShiftName];
                 if (isObs) shiftLines.push('Obs');
                 if (isOncall) shiftLines.push('oncall');
                 if (activeM > 0) shiftLines.push(`Major x${activeM}`);
                 if (activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
                 if (shiftOt > 0) shiftLines.push('OT');
-
+                
                 blocks.push({
                     type: isColo ? 'silver' : 'gold',
                     lines: shiftLines,
                     income: shiftIncome
                 });
-
+                
                 detailsPerShift.push({
                     shift: sName, isColo, isOffVac: false, abbr,
                     obs: isObs, oncall: isOncall, ot: shiftOt > 0,
                     major: activeM, minor: activeMi
                 });
             });
-
+            
             return { total: totalSum, regularTotal, coloTotal, blocks, detailsPerShift };
         }
 
-        function renderCalendar() {
+        function renderScheduleCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             const todayObj = new Date();
             const isCurrentMonth = (month === todayObj.getMonth() && year === todayObj.getFullYear());
-
-            document.getElementById('month-year-display').innerText = `${monthNames[month]}`;
-            const currentDateHeaderDisplay = document.getElementById('current-date-header-display');
+            
+            document.getElementById('schedule-month-year-display').innerText = `${monthNames[month]}`;
+            const headerDisplay = document.getElementById('schedule-current-date-header-display');
             if (isCurrentMonth) {
-                currentDateHeaderDisplay.innerText = `${todayObj.getDate()} ${monthNames[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}`;
+                headerDisplay.innerText = `${todayObj.getDate()} ${monthNames[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}`;
             } else {
-                currentDateHeaderDisplay.innerText = `${monthNames[month]} ${year + 543}`;
+                headerDisplay.innerText = `${monthNames[month]} ${year + 543}`;
             }
-
+            
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
-
-            const totalCells = Math.ceil((firstDayIndex + totalDays) / 7) * 7;
-            const nextMonthDaysCount = totalCells - (firstDayIndex + totalDays);
-
-            const grid = document.getElementById('calendar-grid');
+            const totalCellsNeeded = firstDayIndex + totalDays;
+            const totalCells = totalCellsNeeded <= 35 ? 35 : 42;
+            const nextMonthDaysCount = totalCells - totalCellsNeeded;
+            const grid = document.getElementById('schedule-calendar-grid');
             grid.innerHTML = '';
-
-            let regularTotalMonthly = 0;
-            let coloTotalMonthly = 0;
-
-            let regularStats = { obs: { count: 0, total: 0, entries: [] }, oncall: { count: 0, total: 0, entries: [] }, ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
-            let coloStats = { ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
-
-            // 1. วันของเดือนก่อนหน้า (BG สีขาว และไม่มีเส้นแบ่ง/ตัวเลข)
+            
+            // 1. Previous month trailing days
             for (let i = firstDayIndex - 1; i >= 0; i--) {
                 const cell = document.createElement('div');
-                cell.className = 'bg-white min-h-[140px] p-2';
-                cell.innerHTML = ``;
+                cell.className = 'bg-white min-h-[90px] sm:min-h-[110px] p-2';
                 grid.appendChild(cell);
             }
-
-            // 2. วันของเดือนปัจจุบัน
+            
+            // 2. Current month days
             for (let day = 1; day <= totalDays; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = shiftsData[dateStr];
@@ -423,21 +465,107 @@
                 const dayOfWeek = currentDateObj.getDay();
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const isToday = (day === todayObj.getDate() && month === todayObj.getMonth() && year === todayObj.getFullYear());
-
                 const cell = document.createElement('div');
                 const bgClass = isWeekend ? 'bg-slate-100/90' : 'bg-white';
-                cell.className = `${bgClass} min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 
+                cell.className = `${bgClass} min-h-[90px] sm:min-h-[110px] p-2 flex flex-col justify-start cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 cell.ondblclick = () => openModal(dateStr);
+                
+                let shiftBadgesHtml = '';
+                if (dayData) {
+                    let rawList = dayData.shiftDetails || [];
+                    const shiftOrderIndex = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
+                    let sortedList = [...rawList].sort((a, b) => (shiftOrderIndex[a.shift] || 99) - (shiftOrderIndex[b.shift] || 99));
+                    
+                    if (sortedList.length > 0 || dayData.isCall) {
+                        shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mt-1">';
+                        sortedList.forEach(item => {
+                            let s = item.shift;
+                            let badgeStyle = 'bg-slate-100 text-slate-800 border-slate-300';
+                            let displayLabel = s;
+                            if (s === 'เช้า') badgeStyle = 'bg-sky-100 text-sky-800 border-sky-300';
+                            else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-200';
+                            else if (s === 'ดึก') badgeStyle = 'bg-slate-200 text-slate-800 border-slate-400';
+                            else if (s === 'Colonoscope') { badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300'; displayLabel = 'C'; }
+                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'พัก'; }
+                            else if (s === 'Vacation') { badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold'; displayLabel = 'Vac'; }
+                            shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
+                        });
+                        if (dayData.isCall) {
+                            shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
+                        }
+                        shiftBadgesHtml += '</div>';
+                    }
+                }
+                
+                cell.innerHTML = `<div><div class="flex justify-between items-center"><span class="text-xs font-semibold ${isWeekend ? 'text-rose-600' : 'text-slate-700'}">${day}</span></div><div>${shiftBadgesHtml}</div></div>`;
+                grid.appendChild(cell);
+            }
+            
+            // 3. Next month leading days
+            for (let day = 1; day <= nextMonthDaysCount; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'bg-white min-h-[90px] sm:min-h-[110px] p-2';
+                grid.appendChild(cell);
+            }
+        }
 
+        function renderIncomeCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const todayObj = new Date();
+            const isCurrentMonth = (month === todayObj.getMonth() && year === todayObj.getFullYear());
+            
+            document.getElementById('income-month-year-display').innerText = `${monthNames[month]}`;
+            const headerDisplay = document.getElementById('income-current-date-header-display');
+            if (isCurrentMonth) {
+                headerDisplay.innerText = `${todayObj.getDate()} ${monthNames[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}`;
+            } else {
+                headerDisplay.innerText = `${monthNames[month]} ${year + 543}`;
+            }
+            
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const totalCellsNeeded = firstDayIndex + totalDays;
+            const totalCells = totalCellsNeeded <= 35 ? 35 : 42;
+            const nextMonthDaysCount = totalCells - totalCellsNeeded;
+            const grid = document.getElementById('income-calendar-grid');
+            grid.innerHTML = '';
+            
+            let regularTotalMonthly = 0;
+            let coloTotalMonthly = 0;
+            let regularStats = { obs: { count: 0, total: 0, entries: [] }, oncall: { count: 0, total: 0, entries: [] }, ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
+            let coloStats = { ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
+            
+            // 1. Previous month trailing days
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const cell = document.createElement('div');
+                cell.className = 'bg-white min-h-[120px] sm:min-h-[140px] p-2';
+                grid.appendChild(cell);
+            }
+            
+            // 2. Current month days
+            for (let day = 1; day <= totalDays; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayData = shiftsData[dateStr];
+                const currentDateObj = new Date(year, month, day);
+                const dayOfWeek = currentDateObj.getDay();
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                const isToday = (day === todayObj.getDate() && month === todayObj.getMonth() && year === todayObj.getFullYear());
+                const cell = document.createElement('div');
+                const bgClass = isWeekend ? 'bg-slate-100/90' : 'bg-white';
+                
+                cell.className = `${bgClass} min-h-[120px] sm:min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
+                cell.ondblclick = () => openModal(dateStr);
+                
                 let shiftBadgesHtml = '';
                 let incomeBoxHtml = '';
-
+                
                 if (dayData) {
                     const calcResult = calculateDayDetails(dayData);
                     regularTotalMonthly += calcResult.regularTotal;
                     coloTotalMonthly += calcResult.coloTotal;
-
+                    
                     calcResult.detailsPerShift.forEach(ds => {
                         if (ds.isOffVac) return;
                         if (!ds.isColo) {
@@ -452,11 +580,11 @@
                             if (ds.minor > 0) { coloStats.minor.count += ds.minor; coloStats.minor.total += (ds.minor * 130); coloStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
                         }
                     });
-
+                    
                     let rawList = dayData.shiftDetails || [];
                     const shiftOrderIndex = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
                     let sortedNames = rawList.map(i => i.shift).sort((a, b) => (shiftOrderIndex[a] || 99) - (shiftOrderIndex[b] || 99));
-
+                    
                     if (sortedNames.length > 0 || dayData.isCall) {
                         shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mb-1">';
                         sortedNames.forEach(s => {
@@ -466,20 +594,19 @@
                             else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-200';
                             else if (s === 'ดึก') badgeStyle = 'bg-slate-200 text-slate-800 border-slate-400';
                             else if (s === 'Colonoscope') { badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300'; displayLabel = 'C'; }
-                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'Off'; }
+                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'พัก'; }
                             else if (s === 'Vacation') { badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold'; displayLabel = 'Vac'; }
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
-
                         if (dayData.isCall) {
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
                         }
                         shiftBadgesHtml += '</div>';
                     }
-
+                    
                     if (calcResult.blocks.length > 0) {
                         let contentBlocksHtml = '';
-                        calcResult.blocks.forEach((block, bIdx) => {
+                        calcResult.blocks.forEach((block) => {
                             let boxStyle = '';
                             if (block.type === 'gold') {
                                 boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950';
@@ -488,45 +615,30 @@
                             } else if (block.type === 'green') {
                                 boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950';
                             }
-
                             let innerLines = '';
                             block.lines.forEach((lineText, lIdx) => {
                                 innerLines += lIdx === 0 ? `<div class="font-bold text-[10px]">${lineText}</div>` : `<div class="text-[9px] opacity-90">${lineText}</div>`;
                             });
-
-                            contentBlocksHtml += `
-                                <div class="${boxStyle} mb-1 last:mb-0">
-                                    <div class="space-y-0.5">${innerLines}</div>
-                                    ${block.income && block.income > 0 ? `<div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">${block.income.toLocaleString()} บาท</div>` : ''}
-                                </div>
-                            `;
+                            contentBlocksHtml += `<div class="${boxStyle} mb-1 last:mb-0"><div class="space-y-0.5">${innerLines}</div>${block.income && block.income > 0 ? `<div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">${block.income.toLocaleString()} บาท</div>` : ''}</div>`;
                         });
                         incomeBoxHtml = `<div class="space-y-1">${contentBlocksHtml}</div>`;
                     }
                 }
-
-                cell.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold ${isWeekend ? 'text-rose-600' : 'text-slate-700'}">${day}</span></div>
-                        <div>${shiftBadgesHtml}</div>
-                    </div>
-                    <div class="mt-auto">${incomeBoxHtml}</div>
-                `;
+                
+                cell.innerHTML = `<div><div class="flex justify-between items-center mb-1"><span class="text-xs font-semibold ${isWeekend ? 'text-rose-600' : 'text-slate-700'}">${day}</span></div><div>${shiftBadgesHtml}</div></div><div class="mt-auto">${incomeBoxHtml}</div>`;
                 grid.appendChild(cell);
             }
-
-            // 3. วันของเดือนถัดไป (BG สีขาว และไม่มีเส้นแบ่ง/ตัวเลข เช่นกัน)
+            
+            // 3. Next month leading days
             for (let day = 1; day <= nextMonthDaysCount; day++) {
                 const cell = document.createElement('div');
-                cell.className = 'bg-white min-h-[140px] p-2';
-                cell.innerHTML = ``;
+                cell.className = 'bg-white min-h-[120px] sm:min-h-[140px] p-2';
                 grid.appendChild(cell);
             }
-
+            
             document.getElementById('regular-income').innerText = `${regularTotalMonthly.toLocaleString()} บาท`;
             document.getElementById('colo-income').innerText = `${coloTotalMonthly.toLocaleString()} บาท`;
             document.getElementById('total-income').innerText = `${(regularTotalMonthly + coloTotalMonthly).toLocaleString()} บาท`;
-
             renderSummaryTables(regularStats, coloStats);
         }
 
@@ -537,17 +649,23 @@
                 <tr><td class="p-3 font-semibold text-slate-700">On Call</td><td class="p-3 text-center font-medium">${regularStats.oncall.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.oncall.entries)}</td></tr>
                 <tr><td class="p-3 font-semibold text-slate-700">OT</td><td class="p-3 text-center font-medium">${regularStats.ot.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.ot.entries)}</td></tr>
                 <tr><td class="p-3 font-semibold text-slate-700">Major</td><td class="p-3 text-center font-medium">${regularStats.major.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.major.entries)}</td></tr>
-                <tr><td class="p-3 font-semibold text-slate-700">Minor</td><td class="p-3 text-center font-medium">${regularStats.minor.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td></tr>
-            `;
+                <tr><td class="p-3 font-semibold text-slate-700">Minor</td><td class="p-3 text-center font-medium">${regularStats.minor.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td></tr>`;
+            
             document.getElementById('summary-table-colo').innerHTML = `
                 <tr><td class="p-3 font-semibold text-slate-700">OT</td><td class="p-3 text-center font-medium">${coloStats.ot.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.ot.entries)}</td></tr>
                 <tr><td class="p-3 font-semibold text-slate-700">Major</td><td class="p-3 text-center font-medium">${coloStats.major.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.major.entries)}</td></tr>
-                <tr><td class="p-3 font-semibold text-slate-700">Minor</td><td class="p-3 text-center font-medium">${coloStats.minor.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td></tr>
-            `;
+                <tr><td class="p-3 font-semibold text-slate-700">Minor</td><td class="p-3 text-center font-medium">${coloStats.minor.count}</td><td class="p-3 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td><td class="p-3 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td></tr>`;
         }
 
-        function changeMonth(direction) { currentDate.setMonth(currentDate.getMonth() + direction); renderCalendar(); }
-        function goToCurrentMonth() { currentDate = new Date(); renderCalendar(); }
+        function changeMonth(direction) { 
+            currentDate.setMonth(currentDate.getMonth() + direction); 
+            renderAll(); 
+        }
+        
+        function goToCurrentMonth() { 
+            currentDate = new Date(); 
+            renderAll(); 
+        }
 
         function openModal(dateStr) {
             selectedDateStr = dateStr;
@@ -555,14 +673,14 @@
             document.getElementById('modal-date-title').innerText = `จัดการเวรวันที่ ${parseInt(parts[2])} ${monthNames[parseInt(parts[1])-1]} ${parseInt(parts[0])+543}`;
             const existing = shiftsData[dateStr] || { shiftDetails: [], isCall: false };
             let details = existing.shiftDetails || [];
-            
             modalCallChecked = !!existing.isCall;
             updateModalCallButtonUI();
-
+            
             document.querySelectorAll('input[name="shift-option"]').forEach(cb => {
                 cb.checked = !!details.find(d => d.shift === cb.value);
             });
             renderShiftIncomeInputs(details);
+            
             document.getElementById('shift-modal').classList.remove('hidden');
             document.getElementById('shift-modal').classList.add('flex');
         }
@@ -585,6 +703,7 @@
             const currentDetails = gatherModalDetailsFromUI();
             const selectedShifts = [];
             document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => selectedShifts.push(cb.value));
+            
             let newDetails = selectedShifts.map(s => currentDetails.find(d => d.shift === s) || { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' });
             renderShiftIncomeInputs(newDetails);
             updatePreviewTotal();
@@ -592,33 +711,39 @@
 
         function renderShiftIncomeInputs(details) {
             const container = document.getElementById('shift-incomes-container');
+            const previewContainer = document.getElementById('preview-total-container');
             container.innerHTML = '';
+            
+            if (activeTab === 'schedule') {
+                previewContainer.classList.add('hidden');
+                if (details.length === 0) {
+                    container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อบันทึกตารางเวร</div>';
+                }
+                return;
+            } else {
+                previewContainer.classList.remove('hidden');
+            }
+            
             if (details.length === 0) {
                 container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อกำหนดรายได้หรือรายละเอียด</div>';
                 updatePreviewTotal();
                 return;
             }
-
-            details.forEach((item, index) => {
+            
+            details.forEach((item) => {
                 let badgeBg = 'bg-sky-50 text-sky-800 border-sky-200';
                 if (item.shift === 'บ่าย') badgeBg = 'bg-pink-50 text-pink-800 border-pink-200';
                 else if (item.shift === 'ดึก') badgeBg = 'bg-slate-100 text-slate-800 border-slate-300';
                 else if (item.shift === 'Colonoscope') badgeBg = 'bg-purple-50 text-purple-800 border-purple-200';
                 else if (item.shift === 'Off') badgeBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
                 else if (item.shift === 'Vacation') badgeBg = 'bg-emerald-700 text-white border-emerald-800';
-
+                
                 const isOffVac = (item.shift === 'Off' || item.shift === 'Vacation');
                 const div = document.createElement('div');
                 div.className = 'p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
                 
                 if (isOffVac) {
-                    div.innerHTML = `
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5"><span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span></div>
-                        <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
-                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">รายละเอียดเพิ่มเติม (หากไม่กรอก จะไม่มีกรอบแสดงผลในปฏิทิน)</label>
-                            <input type="text" data-field="note" placeholder="กรอกรายละเอียด..." value="${item.note || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
-                        </div>
-                    `;
+                    div.innerHTML = `<div class="flex items-center justify-between border-b border-slate-100 pb-1.5"><span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span></div>`;
                 } else {
                     const subtotal = calculateShiftIncome(item);
                     div.innerHTML = `
@@ -627,17 +752,16 @@
                             <span class="text-xs font-bold text-slate-700 shift-subtotal-display">${subtotal.toLocaleString()} บาท</span>
                         </div>
                         ${item.shift !== 'Colonoscope' ? `
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
-                                    <input type="checkbox" data-field="obs" ${item.obs ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600">
-                                    <div class="text-xs"><span class="font-semibold text-slate-700">Obs</span> <span class="text-slate-400">(88 ฿)</span></div>
-                                </label>
-                                <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
-                                    <input type="checkbox" data-field="oncall" ${item.oncall ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600">
-                                    <div class="text-xs"><span class="font-semibold text-slate-700">On Call</span> <span class="text-slate-400">(142 ฿)</span></div>
-                                </label>
-                            </div>
-                        ` : ''}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
+                                <input type="checkbox" data-field="obs" ${item.obs ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600">
+                                <div class="text-xs"><span class="font-semibold text-slate-700">Obs</span> <span class="text-slate-400">(88 ฿)</span></div>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer">
+                                <input type="checkbox" data-field="oncall" ${item.oncall ? 'checked' : ''} onchange="onShiftIncomeInputChanged()" class="rounded text-sky-600">
+                                <div class="text-xs"><span class="font-semibold text-slate-700">On Call</span> <span class="text-slate-400">(142 ฿)</span></div>
+                            </label>
+                        </div>` : ''}
                         <div class="grid grid-cols-2 gap-2 pt-1">
                             <div class="bg-slate-50 p-2 border border-slate-200 rounded-lg">
                                 <label class="block text-[10px] font-semibold text-slate-700 mb-1">Major (250 ฿)</label>
@@ -647,8 +771,7 @@
                                 <label class="block text-[10px] font-semibold text-slate-700 mb-1">Minor (130 ฿)</label>
                                 <input type="number" data-field="minor" min="0" value="${item.minor || ''}" oninput="onShiftIncomeInputChanged()" class="w-full border border-slate-300 rounded p-1 text-xs text-center focus:outline-none">
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
                 container.appendChild(div);
             });
@@ -656,12 +779,13 @@
         }
 
         function onShiftIncomeInputChanged() {
+            if (activeTab === 'schedule') return;
             document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
                 const badge = div.querySelector('span');
                 if (!badge) return;
                 const shiftName = badge.innerText.replace('เวร: ', '').trim();
                 if (shiftName === 'Off' || shiftName === 'Vacation') return;
-
+                
                 const tempItem = {
                     shift: shiftName,
                     obs: div.querySelector('input[data-field="obs"]')?.checked || false,
@@ -675,13 +799,30 @@
         }
 
         function gatherModalDetailsFromUI() {
+            const selectedShifts = [];
+            document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => selectedShifts.push(cb.value));
+            
+            if (activeTab === 'schedule') {
+                const existingData = shiftsData[selectedDateStr] || { shiftDetails: [] };
+                const existingDetailsMap = {};
+                if (existingData.shiftDetails) {
+                    existingData.shiftDetails.forEach(d => { existingDetailsMap[d.shift] = d; });
+                }
+                return selectedShifts.map(s => {
+                    if (existingDetailsMap[s]) {
+                        return existingDetailsMap[s];
+                    }
+                    return { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' };
+                });
+            }
+            
             let details = [];
             document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
                 const badge = div.querySelector('span');
                 if (!badge) return;
                 const shiftName = badge.innerText.replace('เวร: ', '').trim();
                 if (shiftName === 'Off' || shiftName === 'Vacation') {
-                    details.push({ shift: shiftName, note: div.querySelector('input[data-field="note"]')?.value || '' });
+                    details.push({ shift: shiftName, note: '' });
                 } else {
                     details.push({
                         shift: shiftName,
@@ -696,6 +837,7 @@
         }
 
         function updatePreviewTotal() {
+            if (activeTab === 'schedule') return;
             document.getElementById('preview-daily-total').innerText = `${calculateDayDetails({ shiftDetails: gatherModalDetailsFromUI() }).total.toLocaleString()} บาท`;
         }
 
@@ -708,17 +850,16 @@
         async function saveShift() {
             if (!selectedDateStr) return;
             const details = gatherModalDetailsFromUI();
-            
             if (details.length === 0 && !modalCallChecked) {
                 delete shiftsData[selectedDateStr];
                 await window.deleteCloudShift(selectedDateStr);
             } else {
-                const dataToSave = { shiftDetails: details, isCall: modalCallChecked };
-                shiftsData[selectedDateStr] = dataToSave;
-                await window.saveCloudShift(selectedDateStr, dataToSave);
+                const dataToSetup = { shiftDetails: details, isCall: modalCallChecked };
+                shiftsData[selectedDateStr] = dataToSetup;
+                await window.saveCloudShift(selectedDateStr, dataToSetup);
             }
             closeModal();
-            renderCalendar();
+            renderAll();
         }
 
         async function deleteShift() {
@@ -726,7 +867,7 @@
             delete shiftsData[selectedDateStr];
             await window.deleteCloudShift(selectedDateStr);
             closeModal();
-            renderCalendar();
+            renderAll();
         }
 
         initCalendar();
