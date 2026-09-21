@@ -154,39 +154,43 @@
                 <div id="income-calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px"></div>
             </div>
 
-            <!-- Detailed Summary Tables -->
-            <div class="space-y-4">
-                <div class="bg-white rounded-2xl shadow-sm p-4 overflow-x-auto">
+            <!-- Detailed Summary Tables (Narrow & Left Aligned) -->
+            <div class="space-y-4 flex flex-col items-start">
+                <div class="bg-white rounded-2xl shadow-sm p-4 w-full max-w-xl">
                     <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                         <span>📊</span> รายละเอียด : เวรทำการ
                     </h3>
-                    <table class="w-full text-left border-collapse min-w-[650px] text-xs">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
-                                <th class="p-2.5 font-semibold w-1/6">รายการ</th>
-                                <th class="p-2.5 font-semibold w-1/6 text-center">จำนวนรวม</th>
-                                <th class="p-2.5 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
-                                <th class="p-2.5 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
-                            </tr>
-                        </thead>
-                        <tbody id="summary-table-regular" class="divide-y divide-slate-100"></tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                    <th class="p-2 font-semibold">รายการ</th>
+                                    <th class="p-2 font-semibold text-center">จำนวน</th>
+                                    <th class="p-2 font-semibold text-center">รายได้</th>
+                                    <th class="p-2 font-semibold">วันที่เข้าเงื่อนไข</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table-regular" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="bg-white rounded-2xl shadow-sm p-4 overflow-x-auto">
+                <div class="bg-white rounded-2xl shadow-sm p-4 w-full max-w-xl">
                     <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                         <span>📊</span> รายละเอียด : เวร Colonoscope
                     </h3>
-                    <table class="w-full text-left border-collapse min-w-[650px] text-xs">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
-                                <th class="p-2.5 font-semibold w-1/6">รายการ</th>
-                                <th class="p-2.5 font-semibold w-1/6 text-center">จำนวนรวม</th>
-                                <th class="p-2.5 font-semibold w-1/6 text-center">ราคารวม (บาท)</th>
-                                <th class="p-2.5 font-semibold w-1/2">วันที่เข้าเงื่อนไข</th>
-                            </tr>
-                        </thead>
-                        <tbody id="summary-table-colo" class="divide-y divide-slate-100"></tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                    <th class="p-2 font-semibold">รายการ</th>
+                                    <th class="p-2 font-semibold text-center">จำนวน</th>
+                                    <th class="p-2 font-semibold text-center">รายได้</th>
+                                    <th class="p-2 font-semibold">วันที่เข้าเงื่อนไข</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table-colo" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -347,7 +351,7 @@
                 let isColo = (sName === 'Colonoscope');
                 let isOff = (sName === 'Off');
                 let isVac = (sName === 'Vacation');
-                let displayShiftName = isColo ? 'C' : (isVac ? 'Vac' : (isOff ? 'พัก' : sName));
+                let displayShiftName = isColo ? 'C' : (isVac ? 'Vac' : (isOff ? 'Off' : sName));
                 let abbr = getShiftAbbr(sName);
                 
                 if (isOff || isVac) {
@@ -450,14 +454,12 @@
             const grid = document.getElementById('schedule-calendar-grid');
             grid.innerHTML = '';
             
-            // 1. Previous month trailing days
             for (let i = firstDayIndex - 1; i >= 0; i--) {
                 const cell = document.createElement('div');
                 cell.className = 'bg-white min-h-[90px] sm:min-h-[110px] p-2';
                 grid.appendChild(cell);
             }
             
-            // 2. Current month days
             for (let day = 1; day <= totalDays; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = shiftsData[dateStr];
@@ -487,7 +489,7 @@
                             else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-200';
                             else if (s === 'ดึก') badgeStyle = 'bg-slate-200 text-slate-800 border-slate-400';
                             else if (s === 'Colonoscope') { badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300'; displayLabel = 'C'; }
-                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'พัก'; }
+                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'Off'; }
                             else if (s === 'Vacation') { badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold'; displayLabel = 'Vac'; }
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
@@ -502,7 +504,6 @@
                 grid.appendChild(cell);
             }
             
-            // 3. Next month leading days
             for (let day = 1; day <= nextMonthDaysCount; day++) {
                 const cell = document.createElement('div');
                 cell.className = 'bg-white min-h-[90px] sm:min-h-[110px] p-2';
@@ -537,14 +538,12 @@
             let regularStats = { obs: { count: 0, total: 0, entries: [] }, oncall: { count: 0, total: 0, entries: [] }, ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
             let coloStats = { ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
             
-            // 1. Previous month trailing days
             for (let i = firstDayIndex - 1; i >= 0; i--) {
                 const cell = document.createElement('div');
                 cell.className = 'bg-white min-h-[120px] sm:min-h-[140px] p-2';
                 grid.appendChild(cell);
             }
             
-            // 2. Current month days
             for (let day = 1; day <= totalDays; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = shiftsData[dateStr];
@@ -594,7 +593,7 @@
                             else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-200';
                             else if (s === 'ดึก') badgeStyle = 'bg-slate-200 text-slate-800 border-slate-400';
                             else if (s === 'Colonoscope') { badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300'; displayLabel = 'C'; }
-                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'พัก'; }
+                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'Off'; }
                             else if (s === 'Vacation') { badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold'; displayLabel = 'Vac'; }
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
@@ -629,7 +628,6 @@
                 grid.appendChild(cell);
             }
             
-            // 3. Next month leading days
             for (let day = 1; day <= nextMonthDaysCount; day++) {
                 const cell = document.createElement('div');
                 cell.className = 'bg-white min-h-[120px] sm:min-h-[140px] p-2';
@@ -644,17 +642,18 @@
 
         function renderSummaryTables(regularStats, coloStats) {
             const formatEntries = (arr) => arr.map(e => `[${e}]`).join(', ');
+
             document.getElementById('summary-table-regular').innerHTML = `
-                <tr><td class="p-2.5 font-semibold text-slate-700">Obs</td><td class="p-2.5 text-center font-medium">${regularStats.obs.count}</td><td class="p-2.5 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td><td class="p-2.5 text-slate-600 break-all">${formatEntries(regularStats.obs.entries)}</td></tr>
-                <tr><td class="p-2.5 font-semibold text-slate-700">On Call</td><td class="p-2.5 text-center font-medium">${regularStats.oncall.count}</td><td class="p-2.5 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td><td class="p-2.5 text-slate-600 break-all">${formatEntries(regularStats.oncall.entries)}</td></tr>
-                <tr><td class="p-2.5 font-semibold text-slate-700">OT</td><td class="p-2.5 text-center font-medium">${regularStats.ot.count}</td><td class="p-2.5 text-center font-semibold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td><td class="p-2.5 text-slate-600 break-all">${formatEntries(regularStats.ot.entries)}</td></tr>
-                <tr><td class="p-2.5 font-semibold text-slate-700">Major</td><td class="p-2.5 text-center font-medium">${regularStats.major.count}</td><td class="p-2.5 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td><td class="p-2.5 text-slate-600 break-all">${formatEntries(regularStats.major.entries)}</td></tr>
-                <tr><td class="p-2.5 font-semibold text-slate-700">Minor</td><td class="p-2.5 text-center font-medium">${regularStats.minor.count}</td><td class="p-2.5 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td><td class="p-2.5 text-slate-600 break-all">${formatEntries(regularStats.minor.entries)}</td></tr>`;
+                <tr><td class="p-2 font-semibold text-slate-700">Obs</td><td class="p-2 text-center font-medium">${regularStats.obs.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.obs.entries)}</td></tr>
+                <tr><td class="p-2 font-semibold text-slate-700">On Call</td><td class="p-2 text-center font-medium">${regularStats.oncall.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.oncall.entries)}</td></tr>
+                <tr><td class="p-2 font-semibold text-slate-700">OT</td><td class="p-2 text-center font-medium">${regularStats.ot.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.ot.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.ot.entries)}</td></tr>
+                <tr><td class="p-2 font-semibold text-slate-700">Major</td><td class="p-2 text-center font-medium">${regularStats.major.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.major.entries)}</td></tr>
+                <tr><td class="p-2 font-semibold text-slate-700">Minor</td><td class="p-2 text-center font-medium">${regularStats.minor.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.minor.entries)}</td></tr>`;
             
             document.getElementById('summary-table-colo').innerHTML = `
-                <tr><td class="p-2.5 font-semibold text-slate-700">OT</td><td class="p-2.5 text-center font-medium">${coloStats.ot.count}</td><td class="p-2.5 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td><td class="p-2.5 text-slate-600 break-all">${formatEntries(coloStats.ot.entries)}</td></tr>
-                <tr><td class="p-2.5 font-semibold text-slate-700">Major</td><td class="p-2.5 text-center font-medium">${coloStats.major.count}</td><td class="p-2.5 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td><td class="p-2.5 text-slate-600 break-all">${formatEntries(coloStats.major.entries)}</td></tr>
-                <tr><td class="p-2.5 font-semibold text-slate-700">Minor</td><td class="p-2.5 text-center font-medium">${coloStats.minor.count}</td><td class="p-2.5 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td><td class="p-2.5 text-slate-600 break-all">${formatEntries(coloStats.minor.entries)}</td></tr>`;
+                <tr><td class="p-2 font-semibold text-slate-700">OT</td><td class="p-2 text-center font-medium">${coloStats.ot.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(coloStats.ot.entries)}</td></tr>
+                <tr><td class="p-2 font-semibold text-slate-700">Major</td><td class="p-2 text-center font-medium">${coloStats.major.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(coloStats.major.entries)}</td></tr>
+                <tr><td class="p-2 font-semibold text-slate-700">Minor</td><td class="p-2 text-center font-medium">${coloStats.minor.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(coloStats.minor.entries)}</td></tr>`;
         }
 
         function changeMonth(direction) { 
