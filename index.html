@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ตารางเวร & รายได้ ณรงค์พล มั่นคง วิสัญญีพยาบาล</title>
+    <title>ระบบตารางเวร รายได้ และคำนวณยาสลบ ณรงค์พล มั่นคง</title>
     <link rel="apple-touch-icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase SDKs -->
@@ -54,24 +54,151 @@
         window.loadCloudData();
     </script>
     <style>
-        :root { --bg: #f8fafc; }
+        :root { 
+            --bg: #f8fafc; 
+            --primary-color: #0284c7;
+            --card-border: #e2e8f0;
+        }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme="light"]) { --bg: #0f172a; }
         }
         :root[data-theme="dark"] { --bg: #0f172a; }
         body { background-color: var(--bg); }
+
+        /* Calculator Themes (Applied only when Calculator tab is active) */
+        body.male { --primary-color: #0284c7; --card-border: #bae6fd; background-color: #f0f9ff !important; }
+        body.female { --primary-color: #db2777; --card-border: #fbcfe8; background-color: #fdf2f8 !important; }
+        body.child { --primary-color: #16a34a; --card-border: #bbf7d0; background-color: #f0fdf4 !important; }
+
+        .calc-wrapper * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .calc-wrapper {
+            color: #1e293b;
+            font-size: 13.5px;
+        }
+        .calc-sub-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            background: #ffffff;
+            padding: 6px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            max-width: 420px;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid var(--card-border);
+        }
+        .calc-sub-btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 20px;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .calc-sub-btn.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .calc-input-card-group {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .calc-input-card-group:focus-within {
+            border-color: var(--primary-color);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.08);
+        }
+        .calc-custom-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            outline: none;
+            padding: 0;
+        }
+        .badge-metric {
+            flex: 1;
+            padding: 6px 4px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            text-align: center;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .badge-tbw { background-color: #0d9488; } 
+        .badge-lbw { background-color: #d97706; } 
+        .calc-drug-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 0.85rem;
+        }
+        .calc-drug-table th, .calc-drug-table td {
+            border: 1px solid #f1f5f9;
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .calc-drug-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.82rem;
+        }
+        .weight-toggle-group {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .weight-pill {
+            padding: 2px 6px;
+            font-size: 0.68rem;
+            font-weight: bold;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #64748b;
+            cursor: pointer;
+            text-align: center;
+        }
+        .weight-pill.active-tbw { background-color: #0d9488; color: white; border-color: #0d9488; }
+        .weight-pill.active-lbw { background-color: #d97706; color: white; border-color: #d97706; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800">
+<body class="bg-slate-50 min-h-screen text-slate-800" id="main-body">
     <div class="max-w-5xl mx-auto p-4 sm:p-6 pb-12">
-        <!-- Tab Navigation Header -->
-        <div class="flex justify-center mb-4">
+        <!-- Master Tab Navigation Header (3 Tabs) -->
+        <div class="flex justify-center mb-6">
             <div class="inline-flex bg-slate-200 p-1.5 rounded-2xl shadow-inner gap-2">
-                <button id="tab-btn-schedule" onclick="switchTab('schedule')" class="px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm">
+                <button id="tab-btn-schedule" onclick="switchTab('schedule')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm">
                     🗓️ ตารางเวร
                 </button>
-                <button id="tab-btn-income" onclick="switchTab('income')" class="px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800">
+                <button id="tab-btn-income" onclick="switchTab('income')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800">
                     💵 รายได้
+                </button>
+                <button id="tab-btn-calculator" onclick="switchTab('calculator')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800">
+                    💊 คำนวณ
                 </button>
             </div>
         </div>
@@ -154,7 +281,7 @@
                 <div id="income-calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px"></div>
             </div>
 
-            <!-- Detailed Summary Tables (Narrow & Left Aligned) -->
+            <!-- Detailed Summary Tables -->
             <div class="space-y-4 flex flex-col items-start">
                 <div class="bg-white rounded-2xl shadow-sm p-4 w-full max-w-xl">
                     <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
@@ -194,9 +321,144 @@
                 </div>
             </div>
         </div>
+
+        <!-- TAB 3: 💊 คำนวณ (Anesthesia Calculator) -->
+        <div id="tab-content-calculator" class="space-y-4 hidden calc-wrapper">
+            <!-- Header inside Calculator -->
+            <div class="flex items-center justify-center gap-3 mb-4 bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
+                <div class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow">💊</div>
+                <div>
+                    <h1 class="text-sky-600 font-bold text-lg">Anesthesia Calculator</h1>
+                    <p class="text-xs text-slate-500 font-semibold">By Peckracycline.nrp</p>
+                </div>
+            </div>
+
+            <!-- Sub Tab Selector: เด็ก, ผู้ชาย, ผู้หญิง -->
+            <div class="calc-sub-tabs">
+                <button class="calc-sub-btn active" onclick="setGender('child')">👶 เด็ก</button>
+                <button class="calc-sub-btn" onclick="setGender('male')">👨 ผู้ชาย</button>
+                <button class="calc-sub-btn" onclick="setGender('female')">👩 ผู้หญิง</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 1. Patient History -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
+                        <span>👤</span>
+                        <h2 class="font-bold text-base text-slate-800">Patient History</h2>
+                    </div>
+                    
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">อายุ (ปี)</span>
+                            <span class="text-xs font-semibold text-slate-400">ปี</span>
+                        </div>
+                        <input type="number" id="age" value="10" class="calc-custom-input" oninput="calculateAll()">
+                    </div>
+
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">น้ำหนัก (KG)</span>
+                            <span class="text-xs font-semibold text-slate-400 text-right">กก.<br>(kg)</span>
+                        </div>
+                        <input type="number" id="weight" value="30" class="calc-custom-input" oninput="calculateAll()">
+                        <div class="flex gap-2 mt-2">
+                            <div class="badge-metric badge-tbw">TBW: <span id="res-tbw">-</span></div>
+                            <div class="badge-metric badge-lbw">LBW: <span id="res-lbw">-</span></div>
+                        </div>
+                    </div>
+
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">ส่วนสูง (CM)</span>
+                            <span class="text-xs font-semibold text-slate-400 text-right">ซม.<br>(cm)</span>
+                        </div>
+                        <input type="number" id="height" value="140" class="calc-custom-input" oninput="calculateAll()">
+                    </div>
+
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">BMI (KG/M²)</span>
+                            <span>📊</span>
+                        </div>
+                        <input type="text" id="bmi" readonly class="calc-custom-input" style="color: #475569;">
+                        <div id="bmi-status" class="text-xs text-slate-500 mt-1"></div>
+                    </div>
+
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">HCT (%)</span>
+                            <span class="text-xs font-semibold text-slate-400">%</span>
+                        </div>
+                        <input type="number" id="hct" value="38" class="calc-custom-input" oninput="calculateAll()">
+                    </div>
+                </div>
+
+                <!-- 2. Airway & Hemodynamics -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
+                        <span>🫁</span>
+                        <h2 class="font-bold text-base text-slate-800">Airway & Hemodynamics</h2>
+                    </div>
+                    
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">ENDOTRACHEAL TUBE (TUBE)</span>
+                        </div>
+                        <input type="text" id="tube" readonly class="calc-custom-input text-base text-slate-700">
+                        <div id="tube-note" class="text-xs text-slate-500 mt-1"></div>
+                    </div>
+
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">LARYNGEAL MASK AIRWAY (LMA)</span>
+                        </div>
+                        <input type="text" id="lma" readonly class="calc-custom-input text-base text-slate-700">
+                    </div>
+
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">HCT ACCEPT (%)</span>
+                            <span class="text-xs font-semibold text-slate-400">%</span>
+                        </div>
+                        <input type="number" id="hct-accept" value="30" class="calc-custom-input" oninput="calculateAll()">
+                    </div>
+
+                    <div class="calc-input-card-group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-500">ABL (ALLOWABLE BLOOD LOSS) (ML)</span>
+                        </div>
+                        <input type="text" id="abl" readonly class="calc-custom-input text-red-600">
+                        <div class="text-xs text-slate-600 mt-2 bg-slate-50 p-2 rounded border border-slate-200 leading-relaxed" id="abl-formula-box">
+                            <span id="abl-calc-text">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Anesthetic Drug -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm md:col-span-2">
+                    <div class="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
+                        <span>💉</span>
+                        <h2 class="font-bold text-base text-slate-800">Anesthetic Drug Doses</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="calc-drug-table">
+                            <thead>
+                                <tr class="bg-slate-50">
+                                    <th style="width: 35%;">Drug Name</th>
+                                    <th style="width: 35%;">Calculated Dose</th>
+                                    <th style="width: 30%;">Standard Formula</th>
+                                </tr>
+                            </thead>
+                            <tbody id="drug-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal for Shift Management -->
     <div id="shift-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -251,32 +513,54 @@
         </div>
     </div>
 
+    <!-- Scripts Integration -->
     <script>
         const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
         let currentDate = new Date();
         let selectedDateStr = null;
         let shiftsData = {};
         let modalCallChecked = false;
-        let activeTab = 'schedule'; // 'schedule' or 'income'
+        let activeTab = 'schedule'; // 'schedule', 'income', or 'calculator'
+
+        function updateTheme() {
+            const body = document.getElementById('main-body');
+            body.classList.remove('male', 'female', 'child');
+            if (activeTab === 'calculator') {
+                body.classList.add(currentGender);
+            }
+        }
 
         function switchTab(tabName) {
             activeTab = tabName;
             const scheduleBtn = document.getElementById('tab-btn-schedule');
             const incomeBtn = document.getElementById('tab-btn-income');
+            const calcBtn = document.getElementById('tab-btn-calculator');
+            
             const scheduleContent = document.getElementById('tab-content-schedule');
             const incomeContent = document.getElementById('tab-content-income');
+            const calcContent = document.getElementById('tab-content-calculator');
+            
+            // Reset styles
+            scheduleBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
+            incomeBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
+            calcBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
+
+            scheduleContent.classList.add('hidden');
+            incomeContent.classList.add('hidden');
+            calcContent.classList.add('hidden');
             
             if (tabName === 'schedule') {
-                scheduleBtn.className = "px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
-                incomeBtn.className = "px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
+                scheduleBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
                 scheduleContent.classList.remove('hidden');
-                incomeContent.classList.add('hidden');
-            } else {
-                incomeBtn.className = "px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
-                scheduleBtn.className = "px-6 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
+            } else if (tabName === 'income') {
+                incomeBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
                 incomeContent.classList.remove('hidden');
-                scheduleContent.classList.add('hidden');
+            } else if (tabName === 'calculator') {
+                calcBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
+                calcContent.classList.remove('hidden');
+                calculateAll();
             }
+            updateTheme();
             renderAll();
         }
 
@@ -355,17 +639,10 @@
                 let abbr = getShiftAbbr(sName);
                 
                 if (isOff || isVac) {
-                    if (item.note && item.note.trim() !== '') {
-                        blocks.push({
-                            type: 'green',
-                            lines: [displayShiftName, item.note.trim()]
-                        });
-                    } else {
-                        blocks.push({
-                            type: 'green',
-                            lines: [displayShiftName]
-                        });
-                    }
+                    blocks.push({
+                        type: 'green',
+                        lines: item.note && item.note.trim() !== '' ? [displayShiftName, item.note.trim()] : [displayShiftName]
+                    });
                     detailsPerShift.push({ shift: sName, isColo: false, isOffVac: true, abbr, note: item.note || '' });
                     return;
                 }
@@ -394,17 +671,6 @@
                 }
                 
                 let shiftIncome = adjustedMM + (isObs ? 88 : 0) + (isOncall ? 142 : 0);
-                let hasIncomeData = (shiftIncome > 0 || isObs || isOncall || activeM > 0 || activeMi > 0);
-                
-                if (!hasIncomeData) {
-                    detailsPerShift.push({
-                        shift: sName, isColo, isOffVac: false, abbr,
-                        obs: isObs, oncall: isOncall, ot: false,
-                        major: 0, minor: 0
-                    });
-                    return;
-                }
-                
                 totalSum += shiftIncome;
                 if (isColo) coloTotal += shiftIncome;
                 else regularTotal += shiftIncome;
@@ -440,11 +706,7 @@
             
             document.getElementById('schedule-month-year-display').innerText = `${monthNames[month]}`;
             const headerDisplay = document.getElementById('schedule-current-date-header-display');
-            if (isCurrentMonth) {
-                headerDisplay.innerText = `${todayObj.getDate()} ${monthNames[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}`;
-            } else {
-                headerDisplay.innerText = `${monthNames[month]} ${year + 543}`;
-            }
+            headerDisplay.innerText = isCurrentMonth ? `${todayObj.getDate()} ${monthNames[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}` : `${monthNames[month]} ${year + 543}`;
             
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
@@ -455,59 +717,41 @@
             grid.innerHTML = '';
             
             for (let i = firstDayIndex - 1; i >= 0; i--) {
-                const cell = document.createElement('div');
-                cell.className = 'bg-white min-h-[90px] sm:min-h-[110px] p-2';
-                grid.appendChild(cell);
+                grid.appendChild(Object.assign(document.createElement('div'), { className: 'bg-white min-h-[90px] sm:min-h-[110px] p-2' }));
             }
             
             for (let day = 1; day <= totalDays; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = shiftsData[dateStr];
                 const currentDateObj = new Date(year, month, day);
-                const dayOfWeek = currentDateObj.getDay();
-                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                const isWeekend = (currentDateObj.getDay() === 0 || currentDateObj.getDay() === 6);
                 const isToday = (day === todayObj.getDate() && month === todayObj.getMonth() && year === todayObj.getFullYear());
                 const cell = document.createElement('div');
-                const bgClass = isWeekend ? 'bg-slate-100/90' : 'bg-white';
                 
-                cell.className = `${bgClass} min-h-[90px] sm:min-h-[110px] p-2 flex flex-col justify-start cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
+                cell.className = `${isWeekend ? 'bg-slate-100/90' : 'bg-white'} min-h-[90px] sm:min-h-[110px] p-2 flex flex-col justify-start cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 cell.ondblclick = () => openModal(dateStr);
                 
                 let shiftBadgesHtml = '';
-                if (dayData) {
-                    let rawList = dayData.shiftDetails || [];
-                    const shiftOrderIndex = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
-                    let sortedList = [...rawList].sort((a, b) => (shiftOrderIndex[a.shift] || 99) - (shiftOrderIndex[b.shift] || 99));
-                    
+                if (dayData && dayData.shiftDetails) {
+                    let sortedList = [...dayData.shiftDetails].sort((a, b) => ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[a.shift] || 99) - ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[b.shift] || 99));
                     if (sortedList.length > 0 || dayData.isCall) {
                         shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mt-1">';
                         sortedList.forEach(item => {
                             let s = item.shift;
-                            let badgeStyle = 'bg-slate-100 text-slate-800 border-slate-300';
-                            let displayLabel = s;
-                            if (s === 'เช้า') badgeStyle = 'bg-sky-100 text-sky-800 border-sky-300';
-                            else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-200';
-                            else if (s === 'ดึก') badgeStyle = 'bg-slate-200 text-slate-800 border-slate-400';
-                            else if (s === 'Colonoscope') { badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300'; displayLabel = 'C'; }
-                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'Off'; }
-                            else if (s === 'Vacation') { badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold'; displayLabel = 'Vac'; }
+                            let badgeStyle = s === 'เช้า' ? 'bg-sky-100 text-sky-800 border-sky-300' : s === 'บ่าย' ? 'bg-pink-100 text-pink-800 border-pink-200' : s === 'ดึก' ? 'bg-slate-200 text-slate-800 border-slate-400' : s === 'Colonoscope' ? 'bg-purple-100 text-purple-800 border-purple-300' : s === 'Off' ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-emerald-700 text-white border-emerald-800 font-bold';
+                            let displayLabel = s === 'Colonoscope' ? 'C' : s === 'Vacation' ? 'Vac' : s;
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
-                        if (dayData.isCall) {
-                            shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
-                        }
+                        if (dayData.isCall) shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
                         shiftBadgesHtml += '</div>';
                     }
                 }
-                
                 cell.innerHTML = `<div><div class="flex justify-between items-center"><span class="text-xs font-semibold ${isWeekend ? 'text-rose-600' : 'text-slate-700'}">${day}</span></div><div>${shiftBadgesHtml}</div></div>`;
                 grid.appendChild(cell);
             }
             
             for (let day = 1; day <= nextMonthDaysCount; day++) {
-                const cell = document.createElement('div');
-                cell.className = 'bg-white min-h-[90px] sm:min-h-[110px] p-2';
-                grid.appendChild(cell);
+                grid.appendChild(Object.assign(document.createElement('div'), { className: 'bg-white min-h-[90px] sm:min-h-[110px] p-2' }));
             }
         }
 
@@ -518,12 +762,7 @@
             const isCurrentMonth = (month === todayObj.getMonth() && year === todayObj.getFullYear());
             
             document.getElementById('income-month-year-display').innerText = `${monthNames[month]}`;
-            const headerDisplay = document.getElementById('income-current-date-header-display');
-            if (isCurrentMonth) {
-                headerDisplay.innerText = `${todayObj.getDate()} ${monthNames[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}`;
-            } else {
-                headerDisplay.innerText = `${monthNames[month]} ${year + 543}`;
-            }
+            document.getElementById('income-current-date-header-display').innerText = isCurrentMonth ? `${todayObj.getDate()} ${monthNames[todayObj.getMonth()]} ${todayObj.getFullYear() + 543}` : `${monthNames[month]} ${year + 543}`;
             
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
@@ -533,33 +772,25 @@
             const grid = document.getElementById('income-calendar-grid');
             grid.innerHTML = '';
             
-            let regularTotalMonthly = 0;
-            let coloTotalMonthly = 0;
+            let regularTotalMonthly = 0, coloTotalMonthly = 0;
             let regularStats = { obs: { count: 0, total: 0, entries: [] }, oncall: { count: 0, total: 0, entries: [] }, ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
             let coloStats = { ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
             
             for (let i = firstDayIndex - 1; i >= 0; i--) {
-                const cell = document.createElement('div');
-                cell.className = 'bg-white min-h-[120px] sm:min-h-[140px] p-2';
-                grid.appendChild(cell);
+                grid.appendChild(Object.assign(document.createElement('div'), { className: 'bg-white min-h-[120px] sm:min-h-[140px] p-2' }));
             }
             
             for (let day = 1; day <= totalDays; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = shiftsData[dateStr];
-                const currentDateObj = new Date(year, month, day);
-                const dayOfWeek = currentDateObj.getDay();
-                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                const isWeekend = (new Date(year, month, day).getDay() === 0 || new Date(year, month, day).getDay() === 6);
                 const isToday = (day === todayObj.getDate() && month === todayObj.getMonth() && year === todayObj.getFullYear());
                 const cell = document.createElement('div');
-                const bgClass = isWeekend ? 'bg-slate-100/90' : 'bg-white';
                 
-                cell.className = `${bgClass} min-h-[120px] sm:min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
+                cell.className = `${isWeekend ? 'bg-slate-100/90' : 'bg-white'} min-h-[120px] sm:min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 cell.ondblclick = () => openModal(dateStr);
                 
-                let shiftBadgesHtml = '';
-                let incomeBoxHtml = '';
-                
+                let shiftBadgesHtml = '', incomeBoxHtml = '';
                 if (dayData) {
                     const calcResult = calculateDayDetails(dayData);
                     regularTotalMonthly += calcResult.regularTotal;
@@ -567,57 +798,36 @@
                     
                     calcResult.detailsPerShift.forEach(ds => {
                         if (ds.isOffVac) return;
+                        let targetStats = ds.isColo ? coloStats : regularStats;
                         if (!ds.isColo) {
-                            if (ds.obs) { regularStats.obs.count += 1; regularStats.obs.total += 88; regularStats.obs.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.oncall) { regularStats.oncall.count += 1; regularStats.oncall.total += 142; regularStats.oncall.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.ot) { regularStats.ot.count += 1; regularStats.ot.total += 710; regularStats.ot.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.major > 0) { regularStats.major.count += ds.major; regularStats.major.total += (ds.major * 250); regularStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
-                            if (ds.minor > 0) { regularStats.minor.count += ds.minor; regularStats.minor.total += (ds.minor * 130); regularStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
-                        } else {
-                            if (ds.ot) { coloStats.ot.count += 1; coloStats.ot.total += 710; coloStats.ot.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.major > 0) { coloStats.major.count += ds.major; coloStats.major.total += (ds.major * 250); coloStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
-                            if (ds.minor > 0) { coloStats.minor.count += ds.minor; coloStats.minor.total += (ds.minor * 130); coloStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
+                            if (ds.obs) { targetStats.obs.count += 1; targetStats.obs.total += 88; targetStats.obs.entries.push(`${day}${ds.abbr}`); }
+                            if (ds.oncall) { targetStats.oncall.count += 1; targetStats.oncall.total += 142; targetStats.oncall.entries.push(`${day}${ds.abbr}`); }
                         }
+                        if (ds.ot) { targetStats.ot.count += 1; targetStats.ot.total += 710; targetStats.ot.entries.push(`${day}${ds.abbr}`); }
+                        if (ds.major > 0) { targetStats.major.count += ds.major; targetStats.major.total += (ds.major * 250); targetStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
+                        if (ds.minor > 0) { targetStats.minor.count += ds.minor; targetStats.minor.total += (ds.minor * 130); targetStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
                     });
                     
                     let rawList = dayData.shiftDetails || [];
-                    const shiftOrderIndex = { 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 };
-                    let sortedNames = rawList.map(i => i.shift).sort((a, b) => (shiftOrderIndex[a] || 99) - (shiftOrderIndex[b] || 99));
+                    let sortedNames = rawList.map(i => i.shift).sort((a, b) => ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[a] || 99) - ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[b] || 99));
                     
                     if (sortedNames.length > 0 || dayData.isCall) {
                         shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mb-1">';
                         sortedNames.forEach(s => {
-                            let badgeStyle = 'bg-slate-100 text-slate-800 border-slate-300';
-                            let displayLabel = s;
-                            if (s === 'เช้า') badgeStyle = 'bg-sky-100 text-sky-800 border-sky-300';
-                            else if (s === 'บ่าย') badgeStyle = 'bg-pink-100 text-pink-800 border-pink-200';
-                            else if (s === 'ดึก') badgeStyle = 'bg-slate-200 text-slate-800 border-slate-400';
-                            else if (s === 'Colonoscope') { badgeStyle = 'bg-purple-100 text-purple-800 border-purple-300'; displayLabel = 'C'; }
-                            else if (s === 'Off') { badgeStyle = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold'; displayLabel = 'Off'; }
-                            else if (s === 'Vacation') { badgeStyle = 'bg-emerald-700 text-white border-emerald-800 font-bold'; displayLabel = 'Vac'; }
+                            let badgeStyle = s === 'เช้า' ? 'bg-sky-100 text-sky-800 border-sky-300' : s === 'บ่าย' ? 'bg-pink-100 text-pink-800 border-pink-200' : s === 'ดึก' ? 'bg-slate-200 text-slate-800 border-slate-400' : s === 'Colonoscope' ? 'bg-purple-100 text-purple-800 border-purple-300' : s === 'Off' ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-emerald-700 text-white border-emerald-800 font-bold';
+                            let displayLabel = s === 'Colonoscope' ? 'C' : s === 'Vacation' ? 'Vac' : s;
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
-                        if (dayData.isCall) {
-                            shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
-                        }
+                        if (dayData.isCall) shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
                         shiftBadgesHtml += '</div>';
                     }
                     
                     if (calcResult.blocks.length > 0) {
                         let contentBlocksHtml = '';
                         calcResult.blocks.forEach((block) => {
-                            let boxStyle = '';
-                            if (block.type === 'gold') {
-                                boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950';
-                            } else if (block.type === 'silver') {
-                                boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-slate-100 via-slate-200 to-slate-300 border-slate-300 text-slate-900';
-                            } else if (block.type === 'green') {
-                                boxStyle = 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950';
-                            }
+                            let boxStyle = block.type === 'gold' ? 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950' : block.type === 'silver' ? 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-slate-100 via-slate-200 to-slate-300 border-slate-300 text-slate-900' : 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950';
                             let innerLines = '';
-                            block.lines.forEach((lineText, lIdx) => {
-                                innerLines += lIdx === 0 ? `<div class="font-bold text-[10px]">${lineText}</div>` : `<div class="text-[9px] opacity-90">${lineText}</div>`;
-                            });
+                            block.lines.forEach((l, idx) => { innerLines += idx === 0 ? `<div class="font-bold text-[10px]">${l}</div>` : `<div class="text-[9px] opacity-90">${l}</div>`; });
                             contentBlocksHtml += `<div class="${boxStyle} mb-1 last:mb-0"><div class="space-y-0.5">${innerLines}</div>${block.income && block.income > 0 ? `<div class="border-t border-black/15 mt-1 pt-0.5 text-right font-bold text-[10px]">${block.income.toLocaleString()} บาท</div>` : ''}</div>`;
                         });
                         incomeBoxHtml = `<div class="space-y-1">${contentBlocksHtml}</div>`;
@@ -629,9 +839,7 @@
             }
             
             for (let day = 1; day <= nextMonthDaysCount; day++) {
-                const cell = document.createElement('div');
-                cell.className = 'bg-white min-h-[120px] sm:min-h-[140px] p-2';
-                grid.appendChild(cell);
+                grid.appendChild(Object.assign(document.createElement('div'), { className: 'bg-white min-h-[120px] sm:min-h-[140px] p-2' }));
             }
             
             document.getElementById('regular-income').innerText = `${regularTotalMonthly.toLocaleString()} บาท`;
@@ -642,7 +850,6 @@
 
         function renderSummaryTables(regularStats, coloStats) {
             const formatEntries = (arr) => arr.map(e => `[${e}]`).join(', ');
-
             document.getElementById('summary-table-regular').innerHTML = `
                 <tr><td class="p-2 font-semibold text-slate-700">Obs</td><td class="p-2 text-center font-medium">${regularStats.obs.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.obs.entries)}</td></tr>
                 <tr><td class="p-2 font-semibold text-slate-700">On Call</td><td class="p-2 text-center font-medium">${regularStats.oncall.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.oncall.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.oncall.entries)}</td></tr>
@@ -656,55 +863,36 @@
                 <tr><td class="p-2 font-semibold text-slate-700">Minor</td><td class="p-2 text-center font-medium">${coloStats.minor.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(coloStats.minor.entries)}</td></tr>`;
         }
 
-        function changeMonth(direction) { 
-            currentDate.setMonth(currentDate.getMonth() + direction); 
-            renderAll(); 
-        }
-        
-        function goToCurrentMonth() { 
-            currentDate = new Date(); 
-            renderAll(); 
-        }
+        function changeMonth(direction) { currentDate.setMonth(currentDate.getMonth() + direction); renderAll(); }
+        function goToCurrentMonth() { currentDate = new Date(); renderAll(); }
 
         function openModal(dateStr) {
             selectedDateStr = dateStr;
             const parts = dateStr.split('-');
             document.getElementById('modal-date-title').innerText = `จัดการเวรวันที่ ${parseInt(parts[2])} ${monthNames[parseInt(parts[1])-1]} ${parseInt(parts[0])+543}`;
             const existing = shiftsData[dateStr] || { shiftDetails: [], isCall: false };
-            let details = existing.shiftDetails || [];
             modalCallChecked = !!existing.isCall;
             updateModalCallButtonUI();
             
             document.querySelectorAll('input[name="shift-option"]').forEach(cb => {
-                cb.checked = !!details.find(d => d.shift === cb.value);
+                cb.checked = !!(existing.shiftDetails || []).find(d => d.shift === cb.value);
             });
-            renderShiftIncomeInputs(details);
-            
+            renderShiftIncomeInputs(existing.shiftDetails || []);
             document.getElementById('shift-modal').classList.remove('hidden');
             document.getElementById('shift-modal').classList.add('flex');
         }
 
-        function toggleModalCallFlag() {
-            modalCallChecked = !modalCallChecked;
-            updateModalCallButtonUI();
-        }
-
+        function toggleModalCallFlag() { modalCallChecked = !modalCallChecked; updateModalCallButtonUI(); }
         function updateModalCallButtonUI() {
             const btn = document.getElementById('modal-call-toggle-btn');
-            if (modalCallChecked) {
-                btn.className = "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-slate-300 border-slate-400 text-slate-900 flex items-center justify-center shadow-xs";
-            } else {
-                btn.className = "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs";
-            }
+            btn.className = modalCallChecked ? "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-slate-300 border-slate-400 text-slate-900 flex items-center justify-center shadow-xs" : "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs";
         }
 
         function handleShiftSelectionChange() {
             const currentDetails = gatherModalDetailsFromUI();
             const selectedShifts = [];
             document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => selectedShifts.push(cb.value));
-            
-            let newDetails = selectedShifts.map(s => currentDetails.find(d => d.shift === s) || { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' });
-            renderShiftIncomeInputs(newDetails);
+            renderShiftIncomeInputs(selectedShifts.map(s => currentDetails.find(d => d.shift === s) || { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' }));
             updatePreviewTotal();
         }
 
@@ -715,9 +903,7 @@
             
             if (activeTab === 'schedule') {
                 previewContainer.classList.add('hidden');
-                if (details.length === 0) {
-                    container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อบันทึกตารางเวร</div>';
-                }
+                if (details.length === 0) container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อบันทึกตารางเวร</div>';
                 return;
             } else {
                 previewContainer.classList.remove('hidden');
@@ -730,13 +916,7 @@
             }
             
             details.forEach((item) => {
-                let badgeBg = 'bg-sky-50 text-sky-800 border-sky-200';
-                if (item.shift === 'บ่าย') badgeBg = 'bg-pink-50 text-pink-800 border-pink-200';
-                else if (item.shift === 'ดึก') badgeBg = 'bg-slate-100 text-slate-800 border-slate-300';
-                else if (item.shift === 'Colonoscope') badgeBg = 'bg-purple-50 text-purple-800 border-purple-200';
-                else if (item.shift === 'Off') badgeBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-                else if (item.shift === 'Vacation') badgeBg = 'bg-emerald-700 text-white border-emerald-800';
-                
+                let badgeBg = item.shift === 'บ่าย' ? 'bg-pink-50 text-pink-800 border-pink-200' : item.shift === 'ดึก' ? 'bg-slate-100 text-slate-800 border-slate-300' : item.shift === 'Colonoscope' ? 'bg-purple-50 text-purple-800 border-purple-200' : item.shift === 'Off' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : item.shift === 'Vacation' ? 'bg-emerald-700 text-white border-emerald-800' : 'bg-sky-50 text-sky-800 border-sky-200';
                 const isOffVac = (item.shift === 'Off' || item.shift === 'Vacation');
                 const div = document.createElement('div');
                 div.className = 'p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
@@ -784,7 +964,6 @@
                 if (!badge) return;
                 const shiftName = badge.innerText.replace('เวร: ', '').trim();
                 if (shiftName === 'Off' || shiftName === 'Vacation') return;
-                
                 const tempItem = {
                     shift: shiftName,
                     obs: div.querySelector('input[data-field="obs"]')?.checked || false,
@@ -800,21 +979,12 @@
         function gatherModalDetailsFromUI() {
             const selectedShifts = [];
             document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => selectedShifts.push(cb.value));
-            
             if (activeTab === 'schedule') {
                 const existingData = shiftsData[selectedDateStr] || { shiftDetails: [] };
-                const existingDetailsMap = {};
-                if (existingData.shiftDetails) {
-                    existingData.shiftDetails.forEach(d => { existingDetailsMap[d.shift] = d; });
-                }
-                return selectedShifts.map(s => {
-                    if (existingDetailsMap[s]) {
-                        return existingDetailsMap[s];
-                    }
-                    return { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' };
-                });
+                const map = {};
+                (existingData.shiftDetails || []).forEach(d => { map[d.shift] = d; });
+                return selectedShifts.map(s => map[s] || { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' });
             }
-            
             let details = [];
             document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
                 const badge = div.querySelector('span');
@@ -867,6 +1037,172 @@
             await window.deleteCloudShift(selectedDateStr);
             closeModal();
             renderAll();
+        }
+
+        /* --- Anesthesia Calculator Logic --- */
+        let currentGender = 'child';
+        let drugSelections = {};
+
+        function setGender(gender) {
+            currentGender = gender;
+            updateTheme();
+            
+            const buttons = document.querySelectorAll('.calc-sub-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (gender === 'child') {
+                buttons[0].classList.add('active');
+                document.getElementById('age').value = 10;
+                document.getElementById('weight').value = 30;
+                document.getElementById('height').value = 140;
+            } else if (gender === 'male') {
+                buttons[1].classList.add('active');
+                document.getElementById('age').value = 40;
+                document.getElementById('weight').value = 70;
+                document.getElementById('height').value = 170;
+            } else if (gender === 'female') {
+                buttons[2].classList.add('active');
+                document.getElementById('age').value = 40;
+                document.getElementById('weight').value = 60;
+                document.getElementById('height').value = 160;
+            }
+            calculateAll();
+        }
+
+        function roundTube(val) { return Math.round(val * 2) / 2; }
+
+        function calculateAll() {
+            const age = parseFloat(document.getElementById('age').value) || 0;
+            const weight = parseFloat(document.getElementById('weight').value) || 0;
+            const height = parseFloat(document.getElementById('height').value) || 0;
+            const hct = parseFloat(document.getElementById('hct').value) || 0;
+            const hctAccept = parseFloat(document.getElementById('hct-accept').value) || 0;
+
+            let bmi = 0, bmiText = '';
+            if (height > 0) {
+                const heightM = height / 100;
+                bmi = weight / (heightM * heightM);
+                document.getElementById('bmi').value = bmi.toFixed(1);
+                if (currentGender === 'child') {
+                    bmiText = 'เกณฑ์เด็ก (ประเมินตามกราฟ Growth Chart)';
+                } else {
+                    bmiText = bmi < 18.5 ? 'น้ำหนักน้อย / ผอม' : bmi < 23 ? 'น้ำหนักปกติ' : bmi < 25 ? 'ท้วม / น้ำหนักเกิน' : bmi < 30 ? 'อ้วนระดับ 1' : 'อ้วนระดับ 2 ขึ้นไป';
+                }
+            } else {
+                document.getElementById('bmi').value = '-';
+            }
+            document.getElementById('bmi-status').innerText = bmiText;
+
+            let tbw = weight;
+            let lbw = currentGender === 'male' ? 50 + (0.91 * (height - 152.4)) : currentGender === 'female' ? 45.5 + (0.91 * (height - 152.4)) : weight * 0.85;
+            if (lbw < 0) lbw = 0;
+
+            document.getElementById('res-tbw').innerText = tbw.toFixed(1) + 'kg';
+            document.getElementById('res-lbw').innerText = lbw.toFixed(1) + 'kg';
+
+            let tubeStr = currentGender === 'male' ? '7.5 - 8.0' : currentGender === 'female' ? '6.5 - 7.0' : `Uncuff: ${roundTube((age / 4) + 4).toFixed(1)} | Cuff: ${roundTube((age / 4) + 3.5).toFixed(1)}`;
+            document.getElementById('tube').value = tubeStr;
+            document.getElementById('tube-note').innerText = currentGender === 'child' ? `คำนวณจากอายุ ${age} ปี` : 'ผู้ใหญ่มาตรฐาน';
+
+            let lmaSize = weight < 5 ? 'Size 1 (< 5 kg)' : weight <= 10 ? 'Size 1.5 (5 - 10 kg)' : weight <= 20 ? 'Size 2 (10 - 20 kg)' : weight <= 30 ? 'Size 2.5 (20 - 30 kg)' : weight <= 50 ? 'Size 3 (30 - 50 kg)' : weight <= 70 ? 'Size 4 (50 - 70 kg)' : 'Size 5 (> 70 kg)';
+            document.getElementById('lma').value = lmaSize;
+
+            let ebv = currentGender === 'male' ? 75 : currentGender === 'female' ? 65 : 85;
+            if (hct > 0 && hctAccept < hct) {
+                let ablVal = weight * ebv * ((hct - hctAccept) / hct);
+                document.getElementById('abl').value = ablVal.toFixed(1) + ' ml';
+                document.getElementById('abl-calc-text').innerHTML = `น้ำหนัก × EBV × [(Hct เริ่มต้น - Hct ยอมรับ) / Hct เริ่มต้น]<br>= ${weight} × ${ebv} × [(${hct} - ${hctAccept}) / ${hct}]<br>= <strong>${ablVal.toFixed(1)} ml</strong>`;
+            } else {
+                document.getElementById('abl').value = '0.0 ml';
+                document.getElementById('abl-calc-text').innerText = 'ไม่สามารถคำนวณได้เนื่องจาก Hct Accept ≥ Hct ปัจจุบัน';
+            }
+
+            renderDrugs(tbw, lbw);
+        }
+
+        function getDrugList() {
+            const isPed = (currentGender === 'child');
+            return [
+                { category: 'Anesthetic & Sedative / Opioids' },
+                { name: 'Propofol', doseMin: isPed ? 2 : 1, doseMax: isPed ? 3 : 2.5, unit: 'mg', defaultWeight: 'TBW', std: isPed ? '2 - 3 mg/kg (ped)' : '1 - 2.5 mg/kg (adult)' },
+                { name: 'Thiopental', doseMin: isPed ? 5 : 3, doseMax: isPed ? 7 : 5, unit: 'mg', defaultWeight: 'TBW', std: isPed ? '5 - 7 mg/kg (ped)' : '3 - 5 mg/kg (adult)' },
+                { name: 'Etomidate', doseMin: 0.2, doseMax: 0.6, unit: 'mg', defaultWeight: 'LBW', std: '0.2 - 0.6 mg/kg' },
+                { name: 'Ketamine', doseMin: 0.5, doseMax: 2, unit: 'mg', defaultWeight: 'LBW', std: '0.5 - 2 mg/kg' },
+                { name: 'Midazolam', doseMin: 0.05, doseMax: 0.15, unit: 'mg', defaultWeight: 'LBW', std: '0.05 - 0.15 mg/kg' },
+                { name: 'Fentanyl', doseMin: 1.5, doseMax: 3, unit: 'mcg', defaultWeight: 'LBW', std: '1.5 - 3 mcg/kg' },
+                { name: 'Morphine', doseMin: 0.15, doseMax: 2, unit: 'mg', defaultWeight: 'LBW', std: '0.15 - 2 mg/kg' },
+                { name: 'Pethidine', doseMin: 1, doseMax: 1.5, unit: 'mg', defaultWeight: 'LBW', std: '1 - 1.5 mg/kg' },
+
+                { category: 'Muscle Relaxants' },
+                { name: 'Suxamethonium', doseMin: 1, doseMax: 2, unit: 'mg', defaultWeight: 'TBW', std: '1 - 2 mg/kg' },
+                { name: 'Cisatracurium', doseMin: 0.15, doseMax: 0.2, unit: 'mg', defaultWeight: 'LBW', std: '0.15 - 0.2 mg/kg' },
+
+                { category: 'Emergency & Reversal' },
+                { name: 'Atropine', doseMin: 0.02, doseMax: 0.02, unit: 'mg', defaultWeight: 'TBW', std: '0.02 mg/kg', decimal: 2 },
+                { name: 'Neostigmine', doseMin: 0.05, doseMax: 0.05, unit: 'mg', defaultWeight: 'TBW', std: '0.05 mg/kg', decimal: 2 },
+
+                { category: 'Other Medications' },
+                { name: 'Ondansetron', doseMin: 0.1, doseMax: 0.15, unit: 'mg', defaultWeight: 'TBW', std: '0.1 - 0.15 mg/kg' },
+                { name: 'Dexamethasone', doseMin: 0.1, doseMax: 0.2, unit: 'mg', defaultWeight: 'TBW', std: '0.1 - 0.2 mg/kg' },
+                { name: 'CPM', doseMin: 0.1, doseMax: 0.2, unit: 'mg', defaultWeight: 'TBW', std: '0.1 - 0.2 mg/kg' },
+                { name: 'Ketorolac', doseMin: 0.5, doseMax: 0.5, unit: 'mg', defaultWeight: 'TBW', std: '0.5 mg/kg' },
+                { name: 'Parecoxib', doseMin: 40, doseMax: 40, unit: 'mg', defaultWeight: 'Fixed', std: '40 mg IV single dose' },
+
+                { category: 'Local Anesthetics' },
+                { name: '1% Lidocaine', doseMin: 5, doseMax: 5, unit: 'cc', defaultWeight: 'TBW', std: '5 mg/kg', type: 'lido1_exact5' },
+                { name: '2% Lidocaine', doseMin: 5, doseMax: 5, unit: 'cc', defaultWeight: 'TBW', std: '5 mg/kg', type: 'lido2_exact5' },
+                { name: '1% Lidocaine with ADR', doseMin: 7, doseMax: 7, unit: 'cc', defaultWeight: 'TBW', std: '7 mg/kg', type: 'lidoAdr1_exact7' },
+                { name: '2% Lidocaine with ADR', doseMin: 7, doseMax: 7, unit: 'cc', defaultWeight: 'TBW', std: '7 mg/kg', type: 'lidoAdr2_exact7' },
+                { name: '0.5% Bupivacaine', doseMin: 2, doseMax: 2, unit: 'cc', defaultWeight: 'TBW', std: '2 mg/kg', type: 'bupi05_exact2' }
+            ];
+        }
+
+        function setDrugWeight(drugName, weightType) {
+            drugSelections[drugName] = weightType;
+            calculateAll();
+        }
+
+        function renderDrugs(tbw, lbw) {
+            const tbody = document.getElementById('drug-table-body');
+            let html = '';
+            getDrugList().forEach(d => {
+                if (d.category) {
+                    html += `<tr class="bg-slate-100 font-bold text-slate-700"><td colspan="3">${d.category}</td></tr>`;
+                } else {
+                    if (!drugSelections[d.name]) drugSelections[d.name] = d.defaultWeight;
+                    let currentChoice = drugSelections[d.name];
+                    let activeWeightVal = (currentChoice === 'LBW') ? lbw : tbw;
+                    let doseValText = '';
+                    let stdText = d.std;
+                    
+                    if (d.name === 'Parecoxib' && currentGender === 'child') {
+                        doseValText = '-';
+                        stdText = '<18 ปี ไม่แนะนำ (Safety/Efficacy ยังไม่ established)';
+                    } else if (d.defaultWeight === 'Fixed') {
+                        doseValText = Math.round(d.doseMin);
+                    } else {
+                        let minMg = activeWeightVal * d.doseMin;
+                        let maxMg = activeWeightVal * d.doseMax;
+                        if (d.decimal === 2) {
+                            doseValText = minMg.toFixed(2) === maxMg.toFixed(2) ? minMg.toFixed(2) : `${minMg.toFixed(2)} - ${maxMg.toFixed(2)}`;
+                        } else if (d.type === 'lido1_exact5' || d.type === 'lidoAdr1_exact7') {
+                            doseValText = (minMg / 10).toFixed(1);
+                        } else if (d.type === 'lido2_exact5' || d.type === 'lidoAdr2_exact7') {
+                            doseValText = (minMg / 20).toFixed(1);
+                        } else if (d.type === 'bupi05_exact2') {
+                            doseValText = (minMg / 5).toFixed(1);
+                        } else {
+                            let minInt = Math.round(minMg), maxInt = Math.round(maxMg);
+                            doseValText = (minInt === maxInt) ? minInt : `${minInt} - ${maxInt}`;
+                        }
+                    }
+
+                    let weightToggleHtml = (d.defaultWeight !== 'Fixed' && !(d.name === 'Parecoxib' && currentGender === 'child')) ? `<div class="weight-toggle-group"><div class="${currentChoice === 'TBW' ? 'weight-pill active-tbw' : 'weight-pill'}" onclick="setDrugWeight('${d.name}', 'TBW')">TBW</div><div class="${currentChoice === 'LBW' ? 'weight-pill active-lbw' : 'weight-pill'}" onclick="setDrugWeight('${d.name}', 'LBW')">LBW</div></div>` : '';
+
+                    html += `<tr><td><strong class="text-sm text-slate-800">${d.name}</strong>${weightToggleHtml}</td><td><div class="font-bold text-sky-600 text-base">${doseValText}</div><div class="text-xs text-slate-500 font-semibold">${d.name === 'Parecoxib' && currentGender === 'child' ? '' : d.unit}</div></td><td class="text-slate-500 text-xs">${stdText}</td></tr>`;
+                }
+            });
+            tbody.innerHTML = html;
         }
 
         initCalendar();
