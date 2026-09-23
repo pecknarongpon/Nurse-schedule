@@ -646,25 +646,38 @@
                 let abbr = getShiftAbbr(sName);
                 
                 if (isOff || isVac) {
-                    // หากไม่มีการกรอกหมายเหตุ (หรือหมายเหตุเป็นค่าว่าง) ให้แสดงเฉพาะป้ายกำกับเวรด้านบน
                     let blockLines = [displayShiftName];
                     if (item.note && item.note.trim() !== '') {
                         blockLines.push(item.note.trim());
+                        blocks.push({
+                            type: 'green',
+                            lines: blockLines
+                        });
                     }
-                    blocks.push({
-                        type: 'green',
-                        lines: blockLines
-                    });
                     detailsPerShift.push({ shift: sName, isOffVac: true, abbr, note: item.note || '' });
                     return;
                 }
                 
+                let activeM = parseInt(item.major) || 0;
+                let activeMi = parseInt(item.minor) || 0;
+                let isObs = !!item.obs;
+                let isOncall = !!item.oncall;
+                
+                // ตรวจสอบเงื่อนไขว่าถ้าไม่มีการกรอกข้อมูลใดๆ (obs, oncall, major, minor ทั้งหมดเป็นค่าว่างหรือ 0) จะไม่สร้างกล่องข้อความ
+                let hasIncomeData = isObs || isOncall || (activeM > 0) || (activeMi > 0);
+                if (!hasIncomeData && !isColo) {
+                    detailsPerShift.push({ shift: sName, isOffVac: false, abbr, obs: false, oncall: false, ot: false, major: 0, minor: 0, note: item.note || '' });
+                    return;
+                }
+                if (!hasIncomeData && isColo) {
+                    detailsPerShift.push({ shift: sName, isOffVac: false, abbr, obs: false, oncall: false, ot: false, major: 0, minor: 0, note: item.note || '' });
+                    return;
+                }
+
                 let shiftIncome = calculateShiftIncome(item);
                 totalSum += shiftIncome;
                 
                 let shiftLines = [displayShiftName];
-                let activeM = parseInt(item.major) || 0;
-                let activeMi = parseInt(item.minor) || 0;
 
                 if (isColo) {
                     coloTotal += shiftIncome;
@@ -672,8 +685,6 @@
                     if (activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
                 } else {
                     regularTotal += shiftIncome;
-                    let isObs = !!item.obs;
-                    let isOncall = !!item.oncall;
                     let sumMM = (activeM * 250) + (activeMi * 130);
                     let shiftOt = (sumMM > 0 && sumMM < 710) ? 1 : 0;
 
@@ -845,10 +856,6 @@
                     if (calcResult.blocks.length > 0) {
                         let contentBlocksHtml = '';
                         calcResult.blocks.forEach((block) => {
-                            // หากเป็นเวร Off หรือ Vacation และไม่มีหมายเหตุ จะไม่สร้างกรอบสีเขียวขึ้นมาแสดงผล
-                            if (block.lines.length === 1 && (block.lines[0] === 'Off' || block.lines[0] === 'Vac')) {
-                                return;
-                            }
                             let boxStyle = block.type === 'colo' ? 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-slate-100 via-slate-200 to-slate-300 border-slate-300 text-slate-900' : (block.type === 'gold' ? 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-amber-50 via-amber-100 to-yellow-200 border-amber-300 text-amber-950' : 'p-1.5 rounded-lg border text-[10px] shadow-xs bg-gradient-to-b from-emerald-50 via-emerald-100 to-emerald-200 border-emerald-300 text-emerald-950');
                             let innerLines = '';
                             block.lines.forEach((l, idx) => { innerLines += idx === 0 ? `<div class="font-bold text-[10px]">${l}</div>` : `<div class="text-[9px] opacity-90">${l}</div>`; });
