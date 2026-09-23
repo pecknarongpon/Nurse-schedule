@@ -681,6 +681,7 @@
                 if (activeM > 0) shiftLines.push(`Major x${activeM}`);
                 if (activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
                 if (shiftOt > 0) shiftLines.push('OT');
+                if (item.note && item.note.trim() !== '') shiftLines.push(item.note.trim());
                 
                 blocks.push({
                     type: isColo ? 'silver' : 'gold',
@@ -691,7 +692,7 @@
                 detailsPerShift.push({
                     shift: sName, isColo, isOffVac: false, abbr,
                     obs: isObs, oncall: isOncall, ot: shiftOt > 0,
-                    major: activeM, minor: activeMi
+                    major: activeM, minor: activeMi, note: item.note || ''
                 });
             });
             
@@ -740,6 +741,9 @@
                             let s = item.shift;
                             let badgeStyle = s === 'เช้า' ? 'bg-sky-100 text-sky-800 border-sky-300' : s === 'บ่าย' ? 'bg-pink-100 text-pink-800 border-pink-200' : s === 'ดึก' ? 'bg-slate-200 text-slate-800 border-slate-400' : s === 'Colonoscope' ? 'bg-purple-100 text-purple-800 border-purple-300' : s === 'Off' ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-emerald-700 text-white border-emerald-800 font-bold';
                             let displayLabel = s === 'Colonoscope' ? 'C' : s === 'Vacation' ? 'Vac' : s;
+                            if (item.note && item.note.trim() !== '') {
+                                displayLabel += ` (${item.note.trim()})`;
+                            }
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
                         if (dayData.isCall) shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
@@ -813,9 +817,13 @@
                     
                     if (sortedNames.length > 0 || dayData.isCall) {
                         shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mb-1">';
-                        sortedNames.forEach(s => {
+                        rawList.forEach(item => {
+                            let s = item.shift;
                             let badgeStyle = s === 'เช้า' ? 'bg-sky-100 text-sky-800 border-sky-300' : s === 'บ่าย' ? 'bg-pink-100 text-pink-800 border-pink-200' : s === 'ดึก' ? 'bg-slate-200 text-slate-800 border-slate-400' : s === 'Colonoscope' ? 'bg-purple-100 text-purple-800 border-purple-300' : s === 'Off' ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-emerald-700 text-white border-emerald-800 font-bold';
                             let displayLabel = s === 'Colonoscope' ? 'C' : s === 'Vacation' ? 'Vac' : s;
+                            if (item.note && item.note.trim() !== '') {
+                                displayLabel += ` (${item.note.trim()})`;
+                            }
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
                         if (dayData.isCall) shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-200 text-slate-800 border-slate-400">📞</span>`;
@@ -903,7 +911,24 @@
             
             if (activeTab === 'schedule') {
                 previewContainer.classList.add('hidden');
-                if (details.length === 0) container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อบันทึกตารางเวร</div>';
+                if (details.length === 0) {
+                    container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อบันทึกตารางเวร</div>';
+                    return;
+                }
+                details.forEach((item) => {
+                    let badgeBg = item.shift === 'บ่าย' ? 'bg-pink-50 text-pink-800 border-pink-200' : item.shift === 'ดึก' ? 'bg-slate-100 text-slate-800 border-slate-300' : item.shift === 'Colonoscope' ? 'bg-purple-50 text-purple-800 border-purple-200' : item.shift === 'Off' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : item.shift === 'Vacation' ? 'bg-emerald-700 text-white border-emerald-800' : 'bg-sky-50 text-sky-800 border-sky-200';
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">หมายเหตุ</label>
+                            <input type="text" data-field="note" value="${item.note || ''}" placeholder="ระบุหมายเหตุ (ถ้ามี)" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:outline-none">
+                        </div>`;
+                    container.appendChild(div);
+                });
                 return;
             } else {
                 previewContainer.classList.remove('hidden');
@@ -922,7 +947,14 @@
                 div.className = 'p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
                 
                 if (isOffVac) {
-                    div.innerHTML = `<div class="flex items-center justify-between border-b border-slate-100 pb-1.5"><span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span></div>`;
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">หมายเหตุ</label>
+                            <input type="text" data-field="note" value="${item.note || ''}" placeholder="ระบุหมายเหตุ (ถ้ามี)" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:outline-none">
+                        </div>`;
                 } else {
                     const subtotal = calculateShiftIncome(item);
                     div.innerHTML = `
@@ -983,7 +1015,17 @@
                 const existingData = shiftsData[selectedDateStr] || { shiftDetails: [] };
                 const map = {};
                 (existingData.shiftDetails || []).forEach(d => { map[d.shift] = d; });
-                return selectedShifts.map(s => map[s] || { shift: s, obs: false, oncall: false, major: 0, minor: 0, note: '' });
+                let details = [];
+                document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
+                    const badge = div.querySelector('span');
+                    if (!badge) return;
+                    const shiftName = badge.innerText.replace('เวร: ', '').trim();
+                    const noteVal = div.querySelector('input[data-field="note"]')?.value || '';
+                    let existingItem = map[shiftName] || { shift: shiftName, obs: false, oncall: false, major: 0, minor: 0 };
+                    existingItem.note = noteVal;
+                    details.push(existingItem);
+                });
+                return details;
             }
             let details = [];
             document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
@@ -991,7 +1033,8 @@
                 if (!badge) return;
                 const shiftName = badge.innerText.replace('เวร: ', '').trim();
                 if (shiftName === 'Off' || shiftName === 'Vacation') {
-                    details.push({ shift: shiftName, note: '' });
+                    const noteVal = div.querySelector('input[data-field="note"]')?.value || '';
+                    details.push({ shift: shiftName, note: noteVal });
                 } else {
                     details.push({
                         shift: shiftName,
