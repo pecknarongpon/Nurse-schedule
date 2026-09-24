@@ -300,6 +300,9 @@
                             <tbody id="summary-table-regular" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
+                    <div id="summary-total-regular-text" class="mt-3 text-xs font-bold text-slate-800">
+                        รวมรายได้เวรทำการ 0 บาท
+                    </div>
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm p-4 w-full max-w-xl">
                     <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
@@ -317,6 +320,9 @@
                             </thead>
                             <tbody id="summary-table-colo" class="divide-y divide-slate-100"></tbody>
                         </table>
+                    </div>
+                    <div id="summary-total-colo-text" class="mt-3 text-xs font-bold text-slate-800">
+                        รวมรายได้เวร Colonoscope 0 บาท
                     </div>
                 </div>
             </div>
@@ -591,18 +597,23 @@
             let mTotal = mCount * 250;
             let miTotal = miCount * 130;
             let sumMM = mTotal + miTotal;
-            let shiftOt = 0;
             let adjustedMM = 0;
 
             if (item.shift === 'Colonoscope') {
-                return sumMM;
+                if (sumMM > 0) {
+                    if (sumMM < 710) {
+                        adjustedMM = 710;
+                    } else {
+                        adjustedMM = sumMM;
+                    }
+                }
+                return adjustedMM;
             } else {
                 let isObs = !!item.obs;
                 let isOncall = !!item.oncall;
                 
                 if (sumMM > 0) {
                     if (sumMM < 710) {
-                        shiftOt = 1;
                         adjustedMM = 710;
                     } else {
                         adjustedMM = sumMM;
@@ -663,13 +674,8 @@
                 let isObs = !!item.obs;
                 let isOncall = !!item.oncall;
                 
-                // ตรวจสอบเงื่อนไขว่าถ้าไม่มีการกรอกข้อมูลใดๆ (obs, oncall, major, minor ทั้งหมดเป็นค่าว่างหรือ 0) จะไม่สร้างกล่องข้อความ
                 let hasIncomeData = isObs || isOncall || (activeM > 0) || (activeMi > 0);
-                if (!hasIncomeData && !isColo) {
-                    detailsPerShift.push({ shift: sName, isOffVac: false, abbr, obs: false, oncall: false, ot: false, major: 0, minor: 0, note: item.note || '' });
-                    return;
-                }
-                if (!hasIncomeData && isColo) {
+                if (!hasIncomeData) {
                     detailsPerShift.push({ shift: sName, isOffVac: false, abbr, obs: false, oncall: false, ot: false, major: 0, minor: 0, note: item.note || '' });
                     return;
                 }
@@ -678,16 +684,16 @@
                 totalSum += shiftIncome;
                 
                 let shiftLines = [displayShiftName];
+                let sumMM = (activeM * 250) + (activeMi * 130);
+                let shiftOt = (sumMM > 0 && sumMM < 710) ? 1 : 0;
 
                 if (isColo) {
                     coloTotal += shiftIncome;
                     if (activeM > 0) shiftLines.push(`Major x${activeM}`);
                     if (activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
+                    if (shiftOt > 0) shiftLines.push('OT');
                 } else {
                     regularTotal += shiftIncome;
-                    let sumMM = (activeM * 250) + (activeMi * 130);
-                    let shiftOt = (sumMM > 0 && sumMM < 710) ? 1 : 0;
-
                     if (isObs) shiftLines.push('Obs');
                     if (isOncall) shiftLines.push('oncall');
                     if (activeM > 0) shiftLines.push(`Major x${activeM}`);
@@ -703,8 +709,10 @@
                 
                 detailsPerShift.push({
                     shift: sName, isOffVac: false, abbr,
-                    obs: !!item.obs, oncall: !!item.oncall, ot: (activeM*250 + activeMi*130 > 0 && activeM*250 + activeMi*130 < 710),
-                    major: activeM, minor: activeMi, note: item.note || ''
+                    obs: !!item.obs, oncall: !!item.oncall, ot: (sumMM > 0 && sumMM < 710),
+                    major: (sumMM > 0 && sumMM < 710) ? 0 : activeM,
+                    minor: (sumMM > 0 && sumMM < 710) ? 0 : activeMi,
+                    note: item.note || ''
                 });
             });
             
@@ -802,7 +810,7 @@
             
             let regularTotalMonthly = 0, coloTotalMonthly = 0;
             let regularStats = { obs: { count: 0, total: 0, entries: [] }, oncall: { count: 0, total: 0, entries: [] }, ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
-            let coloStats = { major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
+            let coloStats = { ot: { count: 0, total: 0, entries: [] }, major: { count: 0, total: 0, entries: [] }, minor: { count: 0, total: 0, entries: [] } };
             
             for (let i = firstDayIndex - 1; i >= 0; i--) {
                 grid.appendChild(Object.assign(document.createElement('div'), { className: 'bg-white min-h-[120px] sm:min-h-[140px] p-2' }));
@@ -828,14 +836,16 @@
                         if (ds.isOffVac) return;
                         let targetStats = ds.shift === 'Colonoscope' ? coloStats : regularStats;
                         
-                        if (ds.shift !== 'Colonoscope') {
-                            if (ds.obs) { targetStats.obs.count += 1; targetStats.obs.total += 88; targetStats.obs.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.oncall) { targetStats.oncall.count += 1; targetStats.oncall.total += 142; targetStats.oncall.entries.push(`${day}${ds.abbr}`); }
-                            if (ds.ot) { targetStats.ot.count += 1; targetStats.ot.total += 710; targetStats.ot.entries.push(`${day}${ds.abbr}`); }
+                        if (ds.obs) { targetStats.obs.count += 1; targetStats.obs.total += 88; targetStats.obs.entries.push(`${day}${ds.abbr}`); }
+                        if (ds.oncall) { targetStats.oncall.count += 1; targetStats.oncall.total += 142; targetStats.oncall.entries.push(`${day}${ds.abbr}`); }
+                        if (ds.ot) { 
+                            targetStats.ot.count += 1; 
+                            targetStats.ot.total += 710; 
+                            targetStats.ot.entries.push(`${day}${ds.abbr}`); 
+                        } else {
+                            if (ds.major > 0) { targetStats.major.count += ds.major; targetStats.major.total += (ds.major * 250); targetStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
+                            if (ds.minor > 0) { targetStats.minor.count += ds.minor; targetStats.minor.total += (ds.minor * 130); targetStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
                         }
-                        
-                        if (ds.major > 0) { targetStats.major.count += ds.major; targetStats.major.total += (ds.major * 250); targetStats.major.entries.push(`${day}${ds.abbr} major ${ds.major}`); }
-                        if (ds.minor > 0) { targetStats.minor.count += ds.minor; targetStats.minor.total += (ds.minor * 130); targetStats.minor.entries.push(`${day}${ds.abbr} minor ${ds.minor}`); }
                     });
                     
                     let rawList = dayData.shiftDetails || [];
@@ -878,10 +888,10 @@
             document.getElementById('regular-income').innerText = `${regularTotalMonthly.toLocaleString()} บาท`;
             document.getElementById('colo-income').innerText = `${coloTotalMonthly.toLocaleString()} บาท`;
             document.getElementById('total-income').innerText = `${(regularTotalMonthly + coloTotalMonthly).toLocaleString()} บาท`;
-            renderSummaryTables(regularStats, coloStats);
+            renderSummaryTables(regularStats, coloStats, regularTotalMonthly, coloTotalMonthly);
         }
 
-        function renderSummaryTables(regularStats, coloStats) {
+        function renderSummaryTables(regularStats, coloStats, regularTotalMonthly, coloTotalMonthly) {
             const formatEntries = (arr) => arr.map(e => `[${e}]`).join(', ');
             document.getElementById('summary-table-regular').innerHTML = `
                 <tr><td class="p-2 font-semibold text-slate-700">Obs</td><td class="p-2 text-center font-medium">${regularStats.obs.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.obs.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.obs.entries)}</td></tr>
@@ -890,9 +900,14 @@
                 <tr><td class="p-2 font-semibold text-slate-700">Major</td><td class="p-2 text-center font-medium">${regularStats.major.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.major.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.major.entries)}</td></tr>
                 <tr><td class="p-2 font-semibold text-slate-700">Minor</td><td class="p-2 text-center font-medium">${regularStats.minor.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${regularStats.minor.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(regularStats.minor.entries)}</td></tr>`;
             
+            document.getElementById('summary-total-regular-text').innerText = `รวมรายได้เวรทำการ ${regularTotalMonthly.toLocaleString()} บาท`;
+
             document.getElementById('summary-table-colo').innerHTML = `
+                <tr><td class="p-2 font-semibold text-slate-700">OT</td><td class="p-2 text-center font-medium">${coloStats.ot.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${coloStats.ot.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(coloStats.ot.entries)}</td></tr>
                 <tr><td class="p-2 font-semibold text-slate-700">Major</td><td class="p-2 text-center font-medium">${coloStats.major.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${coloStats.major.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(coloStats.major.entries)}</td></tr>
                 <tr><td class="p-2 font-semibold text-slate-700">Minor</td><td class="p-2 text-center font-medium">${coloStats.minor.count}</td><td class="p-2 text-center font-semibold text-emerald-600">${coloStats.minor.total.toLocaleString()}</td><td class="p-2 text-slate-600">${formatEntries(coloStats.minor.entries)}</td></tr>`;
+            
+            document.getElementById('summary-total-colo-text').innerText = `รวมรายได้เวร Colonoscope ${coloTotalMonthly.toLocaleString()} บาท`;
         }
 
         function changeMonth(direction) { currentDate.setMonth(currentDate.getMonth() + direction); renderAll(); }
