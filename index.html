@@ -566,66 +566,6 @@
 
         function initCalendar() {
             renderAll();
-            setupSwipeGestures();
-        }
-
-        // เพิ่มระบบตรวจจับการสไลด์ (Swipe) ซ้าย-ขวา สำหรับเปลี่ยนเดือน
-        function setupSwipeGestures() {
-            const handleSwipe = (containerId) => {
-                const element = document.getElementById(containerId);
-                if (!element) return;
-
-                let touchStartX = 0;
-                let touchEndX = 0;
-
-                element.addEventListener('touchstart', (e) => {
-                    touchStartX = e.changedTouches[0].screenX;
-                }, { passive: true });
-
-                element.addEventListener('touchend', (e) => {
-                    touchEndX = e.changedTouches[0].screenX;
-                    handleGesture();
-                }, { passive: true });
-
-                // เพิ่มรองรับการใช้เมาส์คลิกลาก (Mouse Drag) บนคอมพิวเตอร์
-                let isDragging = false;
-                let startX = 0;
-
-                element.addEventListener('mousedown', (e) => {
-                    // ป้องกันการลากทับลิงก์หรือปุ่มภายในตาราง
-                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-                    isDragging = true;
-                    startX = e.clientX;
-                });
-
-                element.addEventListener('mouseup', (e) => {
-                    if (!isDragging) return;
-                    isDragging = false;
-                    let diffX = e.clientX - startX;
-                    if (Math.abs(diffX) > 50) {
-                        if (diffX > 0) {
-                            changeMonth(-1); // ลากขวา = ย้อนกลับเดือนก่อนหน้า
-                        } else {
-                            changeMonth(1);  // ลากซ้าย = ไปเดือนถัดไป
-                        }
-                    }
-                });
-
-                function handleGesture() {
-                    let diffX = touchEndX - touchStartX;
-                    if (Math.abs(diffX) > 50) { // กำหนดระยะขั้นต่ำในการปัด (50px)
-                        if (diffX > 0) {
-                            changeMonth(-1); // ปัดขวา = ย้อนกลับเดือนก่อนหน้า
-                        } else {
-                            changeMonth(1);  // ปัดซ้าย = ไปเดือนถัดไป
-                        }
-                    }
-                }
-            };
-
-            // ผูกฟังก์ชันปัดกับตารางของทั้ง 2 Tab
-            handleSwipe('tab-content-schedule');
-            handleSwipe('tab-content-income');
         }
 
         function renderAll() {
@@ -723,6 +663,7 @@
                 let isObs = !!item.obs;
                 let isOncall = !!item.oncall;
                 
+                // ตรวจสอบเงื่อนไขว่าถ้าไม่มีการกรอกข้อมูลใดๆ (obs, oncall, major, minor ทั้งหมดเป็นค่าว่างหรือ 0) จะไม่สร้างกล่องข้อความ
                 let hasIncomeData = isObs || isOncall || (activeM > 0) || (activeMi > 0);
                 if (!hasIncomeData && !isColo) {
                     detailsPerShift.push({ shift: sName, isOffVac: false, abbr, obs: false, oncall: false, ot: false, major: 0, minor: 0, note: item.note || '' });
