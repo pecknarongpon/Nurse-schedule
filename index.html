@@ -188,18 +188,10 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800" id="main-body">
     <div class="max-w-5xl mx-auto p-4 sm:p-6 pb-12">
-        <!-- Master Tab Navigation Header (3 Tabs) -->
+        <!-- Master Tab Navigation Header (Dynamic based on view) -->
         <div class="flex justify-center mb-6">
-            <div class="inline-flex bg-slate-200 p-1.5 rounded-2xl shadow-inner gap-2">
-                <button id="tab-btn-schedule" onclick="switchTab('schedule')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm">
-                    🗓️ ตารางเวร
-                </button>
-                <button id="tab-btn-income" onclick="switchTab('income')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800">
-                    💵 รายได้
-                </button>
-                <button id="tab-btn-calculator" onclick="switchTab('calculator')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800">
-                    💊 คำนวณ
-                </button>
+            <div id="master-nav-container" class="inline-flex bg-slate-200 p-1.5 rounded-2xl shadow-inner gap-2">
+                <!-- Will be dynamically injected by switchTab / updateNavTabs -->
             </div>
         </div>
 
@@ -233,8 +225,16 @@
             </div>
         </div>
 
-        <!-- TAB 2: Income View -->
+        <!-- INCOME VIEW (Accessible via double-click on schedule dates) -->
         <div id="tab-content-income" class="space-y-4 hidden">
+            <!-- Back Button & Header -->
+            <div class="flex items-center justify-between bg-white rounded-2xl shadow-sm p-3 mb-4">
+                <button onclick="switchTab('schedule')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition flex items-center gap-1.5 shadow-xs">
+                    ← กลับ
+                </button>
+                <div class="text-xs font-bold text-slate-500">💵 หน้าสรุปรายได้</div>
+            </div>
+
             <!-- Header for Income -->
             <header class="bg-white rounded-2xl shadow-sm p-4 mb-4">
                 <!-- 3 Summary Cards -->
@@ -328,7 +328,7 @@
             </div>
         </div>
 
-        <!-- TAB 3: 💊 คำนวณ (Anesthesia Calculator) -->
+        <!-- TAB 2: 💊 คำนวณ (Anesthesia Calculator) -->
         <div id="tab-content-calculator" class="space-y-4 hidden calc-wrapper">
             <!-- Header inside Calculator -->
             <div class="flex items-center justify-center gap-3 mb-4 bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
@@ -536,41 +536,60 @@
             }
         }
 
+        function updateNavTabs() {
+            const container = document.getElementById('master-nav-container');
+            if (!container) return;
+            
+            if (activeTab === 'income') {
+                // When in income view, top tabs are: 💵 รายได้ และ 💊 คำนวณ
+                container.innerHTML = `
+                    <button onclick="switchTab('income')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm">
+                        💵 รายได้
+                    </button>
+                    <button onclick="switchTab('calculator')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800">
+                        💊 คำนวณ
+                    </button>
+                `;
+            } else {
+                // Default view (schedule & calculator), top tabs are: 🗓️ ตารางเวร และ 💊 คำนวณ
+                const isCalc = (activeTab === 'calculator');
+                container.innerHTML = `
+                    <button onclick="switchTab('schedule')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 ${!isCalc ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}">
+                        🗓️ ตารางเวร
+                    </button>
+                    <button onclick="switchTab('calculator')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 ${isCalc ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}">
+                        💊 คำนวณ
+                    </button>
+                `;
+            }
+        }
+
         function switchTab(tabName) {
             activeTab = tabName;
-            const scheduleBtn = document.getElementById('tab-btn-schedule');
-            const incomeBtn = document.getElementById('tab-btn-income');
-            const calcBtn = document.getElementById('tab-btn-calculator');
             
             const scheduleContent = document.getElementById('tab-content-schedule');
             const incomeContent = document.getElementById('tab-content-income');
             const calcContent = document.getElementById('tab-content-calculator');
             
-            // Reset styles
-            scheduleBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
-            incomeBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
-            calcBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800";
-
             scheduleContent.classList.add('hidden');
             incomeContent.classList.add('hidden');
             calcContent.classList.add('hidden');
             
             if (tabName === 'schedule') {
-                scheduleBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
                 scheduleContent.classList.remove('hidden');
             } else if (tabName === 'income') {
-                incomeBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
                 incomeContent.classList.remove('hidden');
             } else if (tabName === 'calculator') {
-                calcBtn.className = "px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm";
                 calcContent.classList.remove('hidden');
                 calculateAll();
             }
+            updateNavTabs();
             updateTheme();
             renderAll();
         }
 
         function initCalendar() {
+            updateNavTabs();
             renderAll();
         }
 
@@ -750,8 +769,10 @@
                 const cell = document.createElement('div');
                 
                 cell.className = `${isWeekend ? 'bg-slate-100/90' : 'bg-white'} min-h-[90px] sm:min-h-[110px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
-                cell.ondblclick = () => openModal(dateStr);
                 
+                // ดับเบิลคลิกเพื่อเข้าหน้า รายได้ และอัปเดต Tab ด้านบนให้เป็น 💵 รายได้ / 💊 คำนวณ
+                cell.ondblclick = () => switchTab('income');
+
                 let shiftBadgesHtml = '', incomeBoxHtml = '';
                 if (dayData && dayData.shiftDetails) {
                     let sortedList = [...dayData.shiftDetails].sort((a, b) => ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[a.shift] || 99) - ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[b.shift] || 99));
@@ -948,37 +969,7 @@
             const previewContainer = document.getElementById('preview-total-container');
             container.innerHTML = '';
             
-            if (activeTab === 'schedule') {
-                previewContainer.classList.add('hidden');
-                if (details.length === 0) {
-                    container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อบันทึกตารางเวร</div>';
-                    return;
-                }
-                details.forEach((item) => {
-                    let badgeBg = item.shift === 'บ่าย' ? 'bg-pink-50 text-pink-800 border-pink-200' : item.shift === 'ดึก' ? 'bg-slate-100 text-slate-700 border-slate-300' : item.shift === 'Off' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : item.shift === 'Vacation' ? 'bg-emerald-700 text-white border-emerald-800' : item.shift === 'Colonoscope' ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-sky-50 text-sky-800 border-sky-200';
-                    const isOffVac = (item.shift === 'Off' || item.shift === 'Vacation');
-                    const div = document.createElement('div');
-                    div.className = 'p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
-                    
-                    let contentHtml = `
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                            <span class="text-xs font-bold px-2 py-0.5 rounded border ${badgeBg}">เวร: ${item.shift}</span>
-                        </div>`;
-                    
-                    if (isOffVac) {
-                        contentHtml += `
-                        <div>
-                            <label class="block text-[10px] font-semibold text-slate-700 mb-1">หมายเหตุ</label>
-                            <input type="text" data-field="note" value="${item.note || ''}" placeholder="ระบุหมายเหตุ (ถ้ามี)" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:outline-none">
-                        </div>`;
-                    }
-                    div.innerHTML = contentHtml;
-                    container.appendChild(div);
-                });
-                return;
-            } else {
-                previewContainer.classList.remove('hidden');
-            }
+            previewContainer.classList.remove('hidden');
             
             if (details.length === 0) {
                 container.innerHTML = '<div class="text-xs text-slate-400 text-center py-2">กรุณาเลือกเวรด้านบนเพื่อกำหนดรายได้หรือรายละเอียด</div>';
@@ -1053,7 +1044,6 @@
         }
 
         function onShiftIncomeInputChanged() {
-            if (activeTab === 'schedule') return;
             document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
                 const badge = div.querySelector('span');
                 if (!badge) return;
@@ -1073,28 +1063,6 @@
         }
 
         function gatherModalDetailsFromUI() {
-            const selectedShifts = [];
-            document.querySelectorAll('input[name="shift-option"]:checked').forEach(cb => selectedShifts.push(cb.value));
-            if (activeTab === 'schedule') {
-                const existingData = shiftsData[selectedDateStr] || { shiftDetails: [] };
-                const map = {};
-                (existingData.shiftDetails || []).forEach(d => { map[d.shift] = d; });
-                let details = [];
-                document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
-                    const badge = div.querySelector('span');
-                    if (!badge) return;
-                    const shiftName = badge.innerText.replace('เวร: ', '').trim();
-                    const noteVal = div.querySelector('input[data-field="note"]')?.value || '';
-                    let existingItem = map[shiftName] || { shift: shiftName, obs: false, oncall: false, major: 0, minor: 0 };
-                    if (shiftName === 'Off' || shiftName === 'Vacation') {
-                        existingItem.note = noteVal;
-                    } else {
-                        delete existingItem.note;
-                    }
-                    details.push(existingItem);
-                });
-                return details;
-            }
             let details = [];
             document.querySelectorAll('#shift-incomes-container > div').forEach(div => {
                 const badge = div.querySelector('span');
@@ -1124,7 +1092,6 @@
         }
 
         function updatePreviewTotal() {
-            if (activeTab === 'schedule') return;
             document.getElementById('preview-daily-total').innerText = `${calculateDayDetails({ shiftDetails: gatherModalDetailsFromUI() }).total.toLocaleString()} บาท`;
         }
 
