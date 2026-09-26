@@ -187,6 +187,17 @@
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800" id="main-body">
+    <!-- Notification Bell: แจ้งเตือนวันที่ลงเวรไว้แล้วแต่ยังไม่กรอกรายได้ -->
+    <div class="fixed top-3 right-3 z-50">
+        <button onclick="toggleNotificationPanel()" class="relative w-11 h-11 bg-white rounded-full shadow-md border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition text-xl">
+            🔔
+            <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center"></span>
+        </button>
+        <div id="notif-panel" class="hidden absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 max-h-80 overflow-y-auto">
+            <div class="p-3 border-b border-slate-100 font-bold text-xs text-slate-700 sticky top-0 bg-white">🔔 วันที่ลงเวรแล้วแต่ยังไม่กรอกรายได้</div>
+            <div id="notif-list"></div>
+        </div>
+    </div>
     <div class="max-w-5xl mx-auto p-4 sm:p-6 pb-12">
         <!-- Master Tab Navigation Header (Dynamic based on view) -->
         <div class="flex justify-center mb-6">
@@ -596,7 +607,84 @@
         function renderAll() {
             renderScheduleCalendar();
             renderIncomeCalendar();
+            renderNotifications();
         }
+
+        /* --- Notifications: เฉพาะวันที่ "ลงเวรไว้แล้ว" (มีข้อมูลใน shiftsData) แต่ยังไม่ได้กรอกรายได้ --- */
+        function getPendingIncomeDates() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            let pending = [];
+
+            Object.keys(shiftsData).forEach(dateStr => {
+                const parts = dateStr.split('-').map(Number);
+                const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                if (dateObj >= today) return; // เฉพาะวันที่ผ่านไปแล้ว
+
+                const data = shiftsData[dateStr];
+                const list = (data && data.shiftDetails) || [];
+                list.forEach(item => {
+                    // ข้าม Off/Vacation เพราะไม่มีรายได้ให้กรอก
+                    if (item.shift === 'Off' || item.shift === 'Vacation') return;
+
+                    const hasIncomeData = !!item.obs || !!item.oncall ||
+                        (parseInt(item.major) || 0) > 0 || (parseInt(item.minor) || 0) > 0;
+                    if (!hasIncomeData) {
+                        pending.push({ dateStr, dateObj, shift: item.shift });
+                    }
+                });
+            });
+
+            pending.sort((a, b) => a.dateObj - b.dateObj);
+            return pending;
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById('notif-badge');
+            const list = document.getElementById('notif-list');
+            if (!badge || !list) return;
+
+            const pending = getPendingIncomeDates();
+
+            if (pending.length === 0) {
+                badge.classList.add('hidden');
+                list.innerHTML = '<div class="p-4 text-xs text-slate-400 text-center">ไม่มีรายการค้างกรอกข้อมูล 🎉</div>';
+                return;
+            }
+
+            badge.classList.remove('hidden');
+            badge.innerText = pending.length > 99 ? '99+' : pending.length;
+
+            list.innerHTML = pending.map(p => {
+                const d = p.dateObj;
+                const label = `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear() + 543}`;
+                return `<div class="p-3 border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer flex justify-between items-center gap-2" onclick="goToPendingDate('${p.dateStr}')">
+                    <span class="text-xs text-slate-700">${label}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold whitespace-nowrap">${getShiftAbbr(p.shift)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleNotificationPanel() {
+            document.getElementById('notif-panel').classList.toggle('hidden');
+        }
+
+        function goToPendingDate(dateStr) {
+            document.getElementById('notif-panel').classList.add('hidden');
+            const parts = dateStr.split('-').map(Number);
+            currentDate = new Date(parts[0], parts[1] - 1, 1);
+            switchTab('income');
+            openModal(dateStr);
+        }
+
+        // ปิด panel เมื่อคลิกนอกกรอบ
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('notif-panel');
+            const bell = e.target.closest('button[onclick="toggleNotificationPanel()"]');
+            if (panel && !panel.classList.contains('hidden') && !panel.contains(e.target) && !bell) {
+                panel.classList.add('hidden');
+            }
+        });
 
         function getShiftAbbr(s) {
             if (s === 'เช้า') return 'ช';
