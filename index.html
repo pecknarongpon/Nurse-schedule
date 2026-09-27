@@ -480,9 +480,14 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modal-date-title" class="text-lg font-bold text-slate-800">จัดการเวรประจำวัน</h3>
-                <button type="button" id="modal-call-toggle-btn" onclick="toggleModalCallFlag()" class="w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs">
-                    📞
-                </button>
+                <div class="flex gap-2">
+                    <button type="button" id="modal-doctor-toggle-btn" onclick="toggleModalDoctorFlag()" class="w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs">
+                        🧑‍⚕️
+                    </button>
+                    <button type="button" id="modal-call-toggle-btn" onclick="toggleModalCallFlag()" class="w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs">
+                        📞
+                    </button>
+                </div>
             </div>
             <div class="space-y-5">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -537,6 +542,7 @@
         let selectedDateStr = null;
         let shiftsData = {};
         let modalCallChecked = false;
+        let modalDoctorChecked = false;
         let activeTab = 'schedule'; // 'schedule', 'income', or 'calculator'
 
         function updateTheme() {
@@ -864,7 +870,7 @@
                 let shiftBadgesHtml = '', incomeBoxHtml = '';
                 if (dayData && dayData.shiftDetails) {
                     let sortedList = [...dayData.shiftDetails].sort((a, b) => ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[a.shift] || 99) - ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[b.shift] || 99));
-                    if (sortedList.length > 0 || dayData.isCall) {
+                    if (sortedList.length > 0 || dayData.isCall || dayData.isDoctor) {
                         shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mt-1">';
                         sortedList.forEach(item => {
                             let s = item.shift;
@@ -872,6 +878,7 @@
                             let displayLabel = s === 'Vacation' ? 'Vac' : (s === 'Colonoscope' ? 'C' : s);
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
+                        if (dayData.isDoctor) shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-100 text-slate-700 border-slate-300">🧑‍⚕️</span>`;
                         if (dayData.isCall) shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-100 text-slate-700 border-slate-300">📞</span>`;
                         shiftBadgesHtml += '</div>';
                     }
@@ -960,7 +967,7 @@
                     let rawList = dayData.shiftDetails || [];
                     let sortedNames = rawList.map(i => i.shift).sort((a, b) => ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[a] || 99) - ({ 'ดึก': 1, 'เช้า': 2, 'บ่าย': 3, 'Colonoscope': 4, 'Off': 5, 'Vacation': 6 }[b] || 99));
                     
-                    if (sortedNames.length > 0 || dayData.isCall) {
+                    if (sortedNames.length > 0 || dayData.isCall || dayData.isDoctor) {
                         shiftBadgesHtml = '<div class="flex flex-wrap gap-1 mb-1">';
                         rawList.forEach(item => {
                             let s = item.shift;
@@ -968,6 +975,7 @@
                             let displayLabel = s === 'Vacation' ? 'Vac' : (s === 'Colonoscope' ? 'C' : s);
                             shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}">${displayLabel}</span>`;
                         });
+                        if (dayData.isDoctor) shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-100 text-slate-700 border-slate-300">🧑‍⚕️</span>`;
                         if (dayData.isCall) shiftBadgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded border font-medium bg-slate-100 text-slate-700 border-slate-300">📞</span>`;
                         shiftBadgesHtml += '</div>';
                     }
@@ -1026,9 +1034,11 @@
             selectedDateStr = dateStr;
             const parts = dateStr.split('-');
             document.getElementById('modal-date-title').innerText = `จัดการเวรวันที่ ${parseInt(parts[2])} ${monthNames[parseInt(parts[1])-1]} ${parseInt(parts[0])+543}`;
-            const existing = shiftsData[dateStr] || { shiftDetails: [], isCall: false };
+            const existing = shiftsData[dateStr] || { shiftDetails: [], isCall: false, isDoctor: false };
             modalCallChecked = !!existing.isCall;
             updateModalCallButtonUI();
+            modalDoctorChecked = !!existing.isDoctor;
+            updateModalDoctorButtonUI();
             
             document.querySelectorAll('input[name="shift-option"]').forEach(cb => {
                 cb.checked = !!(existing.shiftDetails || []).find(d => d.shift === cb.value);
@@ -1042,6 +1052,12 @@
         function updateModalCallButtonUI() {
             const btn = document.getElementById('modal-call-toggle-btn');
             btn.className = modalCallChecked ? "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-slate-300 border-slate-400 text-slate-900 flex items-center justify-center shadow-xs" : "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs";
+        }
+
+        function toggleModalDoctorFlag() { modalDoctorChecked = !modalDoctorChecked; updateModalDoctorButtonUI(); }
+        function updateModalDoctorButtonUI() {
+            const btn = document.getElementById('modal-doctor-toggle-btn');
+            btn.className = modalDoctorChecked ? "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-slate-300 border-slate-400 text-slate-900 flex items-center justify-center shadow-xs" : "w-9 h-9 rounded-lg border text-sm font-semibold transition bg-white border-slate-300 text-slate-700 flex items-center justify-center shadow-xs";
         }
 
         function handleShiftSelectionChange() {
@@ -1192,11 +1208,11 @@
         async function saveShift() {
             if (!selectedDateStr) return;
             const details = gatherModalDetailsFromUI();
-            if (details.length === 0 && !modalCallChecked) {
+            if (details.length === 0 && !modalCallChecked && !modalDoctorChecked) {
                 delete shiftsData[selectedDateStr];
                 await window.deleteCloudShift(selectedDateStr);
             } else {
-                const dataToSetup = { shiftDetails: details, isCall: modalCallChecked };
+                const dataToSetup = { shiftDetails: details, isCall: modalCallChecked, isDoctor: modalDoctorChecked };
                 shiftsData[selectedDateStr] = dataToSetup;
                 await window.saveCloudShift(selectedDateStr, dataToSetup);
             }
