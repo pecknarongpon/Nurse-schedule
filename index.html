@@ -184,6 +184,28 @@
         }
         .weight-pill.active-tbw { background-color: #0d9488; color: white; border-color: #0d9488; }
         .weight-pill.active-lbw { background-color: #d97706; color: white; border-color: #d97706; }
+#tab-content-report{--r-bg:#f4f6f8;--r-card:#fff;--r-tx:#1d2733;--r-mut:#6b7785;--r-bd:#d5dce3;--r-pri:#0f766e;--r-pt:#fff;color:var(--r-tx);font-size:16px;line-height:1.5}
+#tab-content-report *{box-sizing:border-box}
+#tab-content-report h1{font-size:20px;margin:0 0 12px}
+#tab-content-report .card{background:var(--r-card);border:1px solid var(--r-bd);border-radius:12px;padding:14px;margin-bottom:12px}
+#tab-content-report label.t{display:block;font-size:13px;color:var(--r-mut);margin:12px 0 4px}
+#tab-content-report input,#tab-content-report select{width:100%;font:inherit;color:var(--r-tx);background:var(--r-bg);border:1px solid var(--r-bd);border-radius:8px;padding:9px}
+#tab-content-report textarea{width:100%;min-height:300px;font:inherit;color:var(--r-tx);background:var(--r-bg);border:1px solid var(--r-bd);border-radius:8px;padding:9px;white-space:pre}
+#tab-content-report .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#tab-content-report .row input[type=text]{flex:1;min-width:120px;width:auto}
+#tab-content-report .chip{border:1px solid var(--r-bd);background:var(--r-bg);color:var(--r-tx);border-radius:999px;padding:8px 16px;font:inherit;cursor:pointer}
+#tab-content-report .chip.on{background:var(--r-pri);color:var(--r-pt);border-color:var(--r-pri);font-weight:600}
+#tab-content-report .mode .chip{flex:1;text-align:center;padding:12px 8px}
+#tab-content-report .btn{border:0;border-radius:10px;padding:11px 18px;font:inherit;font-weight:600;cursor:pointer;background:var(--r-pri);color:var(--r-pt)}
+#tab-content-report .btn.g{background:transparent;color:var(--r-tx);border:1px solid var(--r-bd)}
+#tab-content-report .btn.w{width:100%}
+#tab-content-report .case{white-space:pre-line;border-left:4px solid var(--r-pri)}
+#tab-content-report .case .h{font-weight:700}
+#tab-content-report .acts{display:flex;gap:8px;margin-top:8px}
+#tab-content-report .acts button{font-size:13px;padding:5px 12px}
+#tab-content-report .rhide{display:none!important}
+#tab-content-report .mut{color:var(--r-mut);font-size:14px}
+#tab-content-report .lbl{font-size:13px;color:var(--r-mut);margin:10px 0 3px}
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800" id="main-body">
@@ -473,6 +495,64 @@
                 </div>
             </div>
         </div>
+
+        <!-- TAB 3: 📄 รายงาน -->
+        <div id="tab-content-report" class="hidden">
+
+<h1>🗓️ รายงานผู้ป่วยผ่าตัด</h1>
+<div class="card">
+  <div class="row mode" id="r_mode"></div>
+</div>
+<div class="card">
+  <label class="t" style="margin-top:0">เลือกวันที่</label>
+  <input type="hidden" id="r_date">
+  <div class="row" style="flex-wrap:nowrap"><select id="r_dd" style="flex:.8"></select><select id="r_dm" style="flex:1.6"></select><select id="r_dy" style="flex:1.1"></select></div>
+</div>
+
+<!-- ในเวลาราชการ -->
+<div id="r_pIn">
+  <button class="btn w" id="r_addBtn" style="margin-bottom:12px">＋ เพิ่มเคส</button>
+  <div class="card rhide" id="r_form">
+    <label class="t" style="margin-top:0">ห้อง</label><div class="row" id="r_room"></div>
+    <label class="t">เพศ</label><div class="row" id="r_sex"></div>
+    <label class="t">อายุ (ปี)</label><input type="number" id="r_age" min="0" max="120" inputmode="numeric">
+    <label class="t">โรคประจำตัว</label><input id="r_comorb" list="r_dl-comorb" autocomplete="off">
+    <label class="t">Diagnosis</label><input id="r_diag" list="r_dl-diag" autocomplete="off">
+    <label class="t">Operation</label><input id="r_op" list="r_dl-op" autocomplete="off">
+    <label class="t">NPO</label>
+    <div class="row"><button class="chip" id="r_amn" type="button">AMN</button><input type="text" id="r_npoTime" placeholder="ระบุเวลา"></div>
+    <label class="t">Set OR</label>
+    <div class="row"><button class="chip" id="r_oncall" type="button">On call</button><input type="text" id="r_setor" placeholder="ข้อความ"></div>
+    <div class="row" style="margin-top:8px"><span class="chip" id="r_otherChip">อื่นๆ</span><input type="text" id="r_other" placeholder="ถ้ากรอก จะใช้ข้อความนี้แทน Set OR On call"></div>
+    <label class="t">แพทย์</label><select id="r_doc"><option value="">-</option></select>
+    <div class="row" style="margin-top:16px"><button class="btn" id="r_save">บันทึก</button><button class="btn g" id="r_cancel">ยกเลิก</button></div>
+  </div>
+  <div id="r_list"></div>
+</div>
+
+<!-- นอกเวลาราชการ -->
+<div id="r_pOut" class="rhide">
+  <div class="card"><div id="r_roster"></div></div>
+  <div class="card"><button class="chip" id="r_noneChip" type="button">ยังไม่มี case นอกเวลาราชการ</button></div>
+  <div class="card">
+    <label class="t" style="margin-top:0">แพทย์</label><select id="r_odoc"></select>
+    <div class="row" style="margin-top:8px"><button class="chip" id="r_fall" type="button">ตกกระดาน</button></div>
+    <label class="t">case</label><input id="r_ocase" list="r_dl-case" autocomplete="off">
+    <label class="t">จำนวน</label><input type="number" id="r_ocount" min="1" inputmode="numeric" placeholder="ตัวเลข">
+    <label class="t">สถานะ</label><div class="row" id="r_ostat"></div>
+    <div class="row" style="margin-top:16px"><button class="btn" id="r_osave">เพิ่มเคส</button><button class="btn g rhide" id="r_ocancel">ยกเลิกแก้ไข</button></div>
+  </div>
+  <div id="r_olist"></div>
+</div>
+
+<datalist id="r_dl-comorb"></datalist><datalist id="r_dl-diag"></datalist><datalist id="r_dl-op"></datalist><datalist id="r_dl-case"></datalist>
+<button class="btn w" id="r_shareBtn">แชร์ข้อมูล</button>
+<div class="card rhide" id="r_shareBox" style="margin-top:12px">
+  <textarea id="r_out" readonly></textarea>
+  <button class="btn w" id="r_copy" style="margin-top:10px">คัดลอกข้อความทั้งหมด</button>
+</div>
+
+        </div>
     </div>
 
     <!-- Modal for Shift Management -->
@@ -543,7 +623,7 @@
         let shiftsData = {};
         let modalCallChecked = false;
         let modalDoctorChecked = false;
-        let activeTab = 'schedule'; // 'schedule', 'income', or 'calculator'
+        let activeTab = 'schedule'; // 'schedule', 'income', 'calculator' or 'report'
 
         function updateTheme() {
             const body = document.getElementById('main-body');
@@ -556,29 +636,21 @@
         function updateNavTabs() {
             const container = document.getElementById('master-nav-container');
             if (!container) return;
-            
-            if (activeTab === 'income') {
-                // When in income view, top tabs are: 💵 รายได้ และ 💊 คำนวณ
-                container.innerHTML = `
-                    <button onclick="switchTab('income')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-sky-700 shadow-sm">
-                        💵 รายได้
-                    </button>
-                    <button onclick="switchTab('calculator')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-800">
-                        💊 คำนวณ
-                    </button>
-                `;
-            } else {
-                // Default view (schedule & calculator), top tabs are: 🗓️ ตารางเวร และ 💊 คำนวณ
-                const isCalc = (activeTab === 'calculator');
-                container.innerHTML = `
-                    <button onclick="switchTab('schedule')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 ${!isCalc ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}">
-                        🗓️ ตารางเวร
-                    </button>
-                    <button onclick="switchTab('calculator')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 ${isCalc ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}">
-                        💊 คำนวณ
-                    </button>
-                `;
-            }
+
+            const isCalc = (activeTab === 'calculator');
+            const isReport = (activeTab === 'report');
+            const on = 'bg-white text-sky-700 shadow-sm';
+            const off = 'text-slate-600 hover:text-slate-800';
+            const cls = 'px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 ';
+
+            // แท็บแรก: ในหน้ารายได้ = 💵 รายได้ / หน้าอื่น = 🗓️ ตารางเวร (เหมือนเดิม)
+            const first = (activeTab === 'income')
+                ? `<button onclick="switchTab('income')" class="${cls}${on}">💵 รายได้</button>`
+                : `<button onclick="switchTab('schedule')" class="${cls}${(!isCalc && !isReport) ? on : off}">🗓️ ตารางเวร</button>`;
+
+            container.innerHTML = first +
+                `<button onclick="switchTab('calculator')" class="${cls}${isCalc ? on : off}">💊 คำนวณ</button>` +
+                `<button onclick="switchTab('report')" class="${cls}${isReport ? on : off}">📄 รายงาน</button>`;
         }
 
         function switchTab(tabName) {
@@ -587,10 +659,12 @@
             const scheduleContent = document.getElementById('tab-content-schedule');
             const incomeContent = document.getElementById('tab-content-income');
             const calcContent = document.getElementById('tab-content-calculator');
+            const reportContent = document.getElementById('tab-content-report');
             
             scheduleContent.classList.add('hidden');
             incomeContent.classList.add('hidden');
             calcContent.classList.add('hidden');
+            reportContent.classList.add('hidden');
             
             if (tabName === 'schedule') {
                 scheduleContent.classList.remove('hidden');
@@ -599,6 +673,8 @@
             } else if (tabName === 'calculator') {
                 calcContent.classList.remove('hidden');
                 calculateAll();
+            } else if (tabName === 'report') {
+                reportContent.classList.remove('hidden');
             }
             updateNavTabs();
             updateTheme();
@@ -1396,5 +1472,130 @@
 
         initCalendar();
     </script>
+<script>
+(function(){
+
+const DOCS=["พ.อนุชิต","พ.นันทวุฒิ","พ.อมรรัตน์","พ.ธัญรดา","พ.ธนิฏฐา","พ.วัชรพงษ์","พ.นครินทร์","พ.สรณ์สิริ","พ.พีรพัฒน์"];
+const SEX=["ชาย","หญิง","เด็กชาย","เด็กหญิง"];
+const ROSTER=[["วิสัญญีแพทย์","an",["พ.ปทิตตานัน"]],["สูตินรีแพทย์","ob",["พ.อมรรัตน์","พ.ธัญรดา","พ.ธนิฏฐา","พ.วัชรพงษ์"]],["ศัลยแพทย์","su",["พ.อนุชิต","พ.นันทวุฒิ"]],["ศัลยกรรมกระดูกและข้อ","or",["พ.นครินทร์","พ.สรณ์สิริ","พ.พีรพัฒน์"]]];
+const TM=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const $=id=>document.getElementById("r_"+id),pad=n=>String(n).padStart(2,"0");
+const ls={get(k,d){try{const v=(localStorage.getItem("rpt_"+k)??localStorage.getItem(k));return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("rpt_"+k,JSON.stringify(v))}catch(e){}}};
+let cases=ls.get("cases",{}),off=ls.get("off",{}),mode=ls.get("mode","in");
+let hist=Object.assign({comorb:[],diag:[],op:[],ocase:[]},ls.get("hist",{}));
+let cur={room:null,sex:null,amn:false,oncall:false},editId=null,os={status:null},oEdit=null;
+const t0=new Date();
+$("date").value=ls.get("date",`${t0.getFullYear()}-${pad(t0.getMonth()+1)}-${pad(t0.getDate())}`);
+const dv=()=>$("date").value;
+const v=x=>x&&String(x).trim()?x:"-";
+function toast(t){let e=$("toast");if(!e){e=document.createElement("div");e.id="r_toast";e.style.cssText="position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#1d2733;color:#fff;padding:10px 18px;border-radius:999px;z-index:9;font-size:15px";document.body.appendChild(e)}e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2200)}
+function fill(sel,arr,first){sel.innerHTML="";if(first!==undefined)sel.add(new Option(first,""));arr.forEach(d=>sel.add(new Option(d,d)))}
+fill($("doc"),DOCS,"-");fill($("odoc"),DOCS,"-");
+function chips(id,arr,st,key){const el=$(id);el.innerHTML="";arr.forEach(x=>{const b=document.createElement("button");b.type="button";b.className="chip"+(st[key]===x?" on":"");b.textContent=x;b.onclick=()=>{st[key]=st[key]===x?null:x;chips(id,arr,st,key)};el.appendChild(b)})}
+function dl(){[["comorb","dl-comorb"],["diag","dl-diag"],["op","dl-op"],["ocase","dl-case"]].forEach(([k,id])=>{$(id).innerHTML=hist[k].map(x=>`<option value="${x.replace(/"/g,"&quot;")}">`).join("")})}
+function remember(k,x){x=x.trim();if(!x)return;hist[k]=[x,...hist[k].filter(y=>y!==x)].slice(0,100)}
+
+/* mode */
+function setMode(m){mode=m;ls.set("mode",m);$("pIn").classList.toggle("rhide",m!=="in");$("pOut").classList.toggle("rhide",m!=="out");$("shareBox").classList.add("rhide");
+  const el=$("mode");el.innerHTML="";[["in","ในเวลาราชการ"],["out","นอกเวลาราชการ"]].forEach(([k,n])=>{const b=document.createElement("button");b.className="chip"+(m===k?" on":"");b.textContent=n;b.onclick=()=>setMode(k);el.appendChild(b)});render()}
+
+/* date */
+function fillDays(s){const n=new Date(+$("dy").value,+$("dm").value,0).getDate(),ds=$("dd");ds.innerHTML="";for(let i=1;i<=n;i++)ds.add(new Option(i,i));ds.value=Math.min(s,n)}
+function syncDate(){const x=`${$("dy").value}-${pad($("dm").value)}-${pad($("dd").value)}`;$("date").value=x;ls.set("date",x);$("shareBox").classList.add("rhide");render()}
+(function(){const[y,m,d]=dv().split("-").map(Number);TM.forEach((n,i)=>$("dm").add(new Option(n,i+1)));for(let k=y-2;k<=y+3;k++)$("dy").add(new Option(k+543,k));$("dm").value=m;$("dy").value=y;fillDays(d);$("dd").onchange=syncDate;$("dm").onchange=$("dy").onchange=()=>{fillDays(+$("dd").value);syncDate()}})();
+
+/* ในเวลาราชการ */
+function resetForm(){cur={room:null,sex:null,amn:false,oncall:false};editId=null;["age","comorb","diag","op","npoTime","setor","other"].forEach(i=>$(i).value="");$("doc").value="";$("amn").classList.remove("on");$("oncall").classList.remove("on");$("otherChip").classList.remove("on");chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex")}
+$("amn").onclick=()=>{cur.amn=!cur.amn;$("amn").classList.toggle("on",cur.amn)};
+$("oncall").onclick=()=>{cur.oncall=!cur.oncall;$("oncall").classList.toggle("on",cur.oncall)};
+$("other").oninput=()=>$("otherChip").classList.toggle("on",!!$("other").value.trim());
+$("addBtn").onclick=()=>{resetForm();$("form").classList.remove("rhide");$("form").scrollIntoView({behavior:"smooth"})};
+$("cancel").onclick=()=>$("form").classList.add("rhide");
+$("save").onclick=()=>{
+  const d=dv();if(!cur.room){toast("กรุณาเลือกห้อง");return}
+  const c={room:cur.room,sex:cur.sex||"",age:$("age").value,comorb:$("comorb").value.trim(),diag:$("diag").value.trim(),op:$("op").value.trim(),amn:cur.amn,npoTime:$("npoTime").value.trim(),oncall:cur.oncall,setor:$("setor").value.trim(),other:$("other").value.trim(),doc:$("doc").value};
+  remember("comorb",c.comorb);remember("diag",c.diag);remember("op",c.op);ls.set("hist",hist);dl();
+  cases[d]=cases[d]||[];if(editId!==null)cases[d][editId]=c;else cases[d].push(c);
+  ls.set("cases",cases);$("form").classList.add("rhide");render();
+};
+function fmt(c){
+  const L=[];
+  const l1=[c.sex,c.age?c.age+" ปี":"",c.comorb?"โรคประจำตัว "+c.comorb:""].filter(Boolean).join(" ");
+  if(l1)L.push(l1);
+  if(c.diag)L.push("Diagnosis : "+c.diag);
+  if(c.op)L.push("Operation : "+c.op);
+  const npo=[c.amn?"AMN":"",c.npoTime].filter(Boolean).join(" ");
+  if(npo)L.push("NPO "+npo);
+  const so=c.other?c.other:(c.oncall||c.setor)?["Set OR",c.oncall?"On call":"",c.setor].filter(Boolean).join(" "):"";
+  if(so)L.push(so);
+  if(c.doc)L.push(c.doc);
+  return L.join("\n");
+}
+function card(head,body,onEdit,onDel){
+  const div=document.createElement("div");div.className="card case";
+  div.innerHTML=`<div class="h">${head}</div>`;div.appendChild(document.createTextNode(body));
+  const a=document.createElement("div");a.className="acts";
+  const e=document.createElement("button");e.className="btn g";e.textContent="แก้ไข";e.onclick=onEdit;
+  const x=document.createElement("button");x.className="btn g";x.textContent="ลบ";x.onclick=()=>{if(x.dataset.c){onDel();return}x.dataset.c=1;x.textContent="ยืนยันลบ";x.style.background="#dc2626";x.style.color="#fff";setTimeout(()=>{x.dataset.c="";x.textContent="ลบ";x.style.background="";x.style.color=""},3000)};
+  a.append(e,x);div.appendChild(a);return div}
+function renderIn(){
+  const d=dv(),arr=cases[d]||[],el=$("list");el.innerHTML="";
+  if(!arr.length){el.innerHTML='<p class="mut" style="text-align:center">ยังไม่มีเคสในวันนี้</p>';return}
+  arr.map((c,i)=>({c,i})).sort((a,b)=>a.c.room-b.c.room||a.i-b.i).forEach(({c,i})=>el.appendChild(card(`📌 ห้อง ${c.room}`,fmt(c),()=>edit(i),()=>{cases[d].splice(i,1);ls.set("cases",cases);render()})));
+}
+function edit(i){
+  const c=cases[dv()][i];resetForm();editId=i;cur={room:c.room,sex:c.sex||null,amn:c.amn,oncall:c.oncall};
+  $("age").value=c.age;$("comorb").value=c.comorb;$("diag").value=c.diag;$("op").value=c.op;$("npoTime").value=c.npoTime;$("setor").value=c.setor;$("other").value=c.other||"";$("doc").value=c.doc;
+  $("amn").classList.toggle("on",c.amn);$("oncall").classList.toggle("on",c.oncall);$("otherChip").classList.toggle("on",!!c.other);
+  chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex");$("form").classList.remove("rhide");$("form").scrollIntoView({behavior:"smooth"});
+}
+
+/* นอกเวลาราชการ */
+const gO=d=>off[d]||(off[d]={r:{},items:[]});
+function renderRoster(){
+  const box=$("roster");box.innerHTML="";const o=gO(dv());
+  ROSTER.forEach(([n,k,opts])=>{const l=document.createElement("div");l.className="lbl";l.textContent=n;const s=document.createElement("select");fill(s,opts,"-");s.value=o.r[k]||"";s.onchange=()=>{o.r[k]=s.value;ls.set("off",off)};box.append(l,s)});
+}
+function resetOff(){oEdit=null;os={status:null,fall:false};$("fall").classList.remove("on");$("odoc").value="";$("ocase").value="";$("ocount").value="";chips("ostat",["เสร็จ","ไม่เสร็จ"],os,"status");$("osave").textContent="เพิ่มเคส";$("ocancel").classList.add("rhide")}
+$("ocancel").onclick=resetOff;
+$("fall").onclick=()=>{os.fall=!os.fall;$("fall").classList.toggle("on",os.fall)};
+$("osave").onclick=()=>{
+  const o=gO(dv()),it={doc:$("odoc").value,ocase:$("ocase").value.trim(),count:$("ocount").value,status:os.status||"",fall:!!os.fall};
+  if(!it.doc&&!it.ocase){toast("กรุณาเลือกแพทย์หรือกรอก case");return}
+  remember("ocase",it.ocase);ls.set("hist",hist);dl();
+  if(oEdit!==null)o.items[oEdit]=it;else o.items.push(it);o.none=false;
+  ls.set("off",off);resetOff();render();
+};
+const ofmt=it=>`${v(it.ocase)}${it.count?` x ${it.count} case`:""}${it.status==="เสร็จ"?" ✔":it.status==="ไม่เสร็จ"?" ✘":""}`;
+const grp=a=>{const m=new Map();a.forEach((it,i)=>{const k=(it.doc||"-")+(it.fall?" (ตกกระดาน)":"");if(!m.has(k))m.set(k,[]);m.get(k).push({it,i})});return[...m]};
+$("noneChip").onclick=()=>{const o=gO(dv());o.none=!o.none;ls.set("off",off);renderOut()};
+function renderOut(){
+  renderRoster();const o=gO(dv()),el=$("olist");el.innerHTML="";$("noneChip").classList.toggle("on",!!o.none);
+  if(!o.items.length){el.innerHTML='<p class="mut" style="text-align:center">ยังไม่มีเคสในวันนี้</p>';return}
+  grp(o.items).forEach(([,g])=>g.forEach(({it,i})=>el.appendChild(card(`📌 ${v(it.doc)}${it.fall?" (ตกกระดาน)":""}`,ofmt(it),()=>{oEdit=i;$("odoc").value=it.doc;$("ocase").value=it.ocase;$("ocount").value=it.count;os={status:it.status||null,fall:!!it.fall};$("fall").classList.toggle("on",os.fall);chips("ostat",["เสร็จ","ไม่เสร็จ"],os,"status");$("osave").textContent="บันทึกการแก้ไข";$("ocancel").classList.remove("rhide");$("odoc").scrollIntoView({behavior:"smooth"})},()=>{o.items.splice(i,1);ls.set("off",off);render()}))));
+}
+
+/* share */
+function thDate(d){const[y,m,dd]=d.split("-").map(Number);return `${dd} ${TM[m-1]} ${y+543}`}
+function buildIn(){
+  const d=dv(),arr=cases[d]||[];let t=`🗓️  ผู้ป่วยผ่าตัด\nวันที่ ${thDate(d)}\n`;
+  [1,2,3,4].forEach(r=>{const rs=arr.filter(c=>c.room===r);t+=`\n📌 ห้อง ${r}  ( ${rs.length?rs.length+" case":"ไม่มี case"} )\n`;rs.forEach((c,i)=>{t+=(i?"\n":"")+fmt(c)+"\n"})});
+  return t.trim();
+}
+function buildOut(){
+  const d=dv(),o=gO(d);let t=`รายชื่อแพทย์ปฏิบัติหน้าที่นอกเวลาราชการ\nประจำวันที่ ${thDate(d)}\n`;
+  ROSTER.forEach(([n,k])=>{if(o.r[k])t+=`\n${n}\n- ${o.r[k]}\n`});
+  if(o.none)t+="\n____________________\nยังไม่มี case นอกเวลาราชการ\n";
+  else if(o.items.length){t+="\n____________________\n";grp(o.items).forEach(([doc,g],gi)=>{t+=(gi?"\n":"")+`${doc}\n`;g.forEach(({it})=>{t+=`- ${ofmt(it)}\n`})})}
+  return t.trim();
+}
+$("shareBtn").onclick=()=>{$("out").value=mode==="in"?buildIn():buildOut();$("shareBox").classList.remove("rhide");$("shareBox").scrollIntoView({behavior:"smooth"})};
+$("copy").onclick=async()=>{const t=$("out").value,b=$("copy");try{await navigator.clipboard.writeText(t)}catch(e){$("out").select();document.execCommand("copy")}b.textContent="คัดลอกแล้ว ✓";setTimeout(()=>b.textContent="คัดลอกข้อความทั้งหมด",1800)};
+
+function render(){if(mode==="in")renderIn();else renderOut()}
+dl();resetOff();setMode(mode);
+
+})();
+</script>
 </body>
 </html>
