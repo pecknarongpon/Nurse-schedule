@@ -500,6 +500,14 @@
         <div id="tab-content-report" class="hidden">
 
 <h1>🗓️ รายงานผู้ป่วยผ่าตัด</h1>
+<div class="card" id="dr_sec">
+  <button class="btn w" id="dr_btn" type="button">📷 อัพโหลดตารางเวรแพทย์</button>
+  <input type="file" id="dr_file" accept="image/*" style="display:none">
+  <div id="dr_box" class="rhide">
+    <img id="dr_img" alt="ตารางเวรแพทย์" style="width:100%;height:auto;display:block;border-radius:8px;border:1px solid var(--r-bd);cursor:pointer">
+    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" id="dr_del" type="button" style="background:#e11d48;color:#fff">🗑️ ลบรูป</button></div>
+  </div>
+</div>
 <div class="card">
   <div class="row mode" id="r_mode"></div>
 </div>
@@ -1665,6 +1673,7 @@ const apply=()=>img.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + $
 function zoomAt(px,py,ns){ns=Math.max(1,Math.min(8,ns));const r=ov.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,k=ns/s;
  x=(px-cx)-((px-cx)-x)*k;y=(py-cy)-((py-cy)-y)*k;s=ns;if(s===1){x=0;y=0}apply()}
 function view(u){img.src=u;s=1;x=0;y=0;apply();ov.style.display='block'}
+window.openImgViewer=view;
 const close=()=>{ov.style.display='none';P.clear()};
 ov.querySelector('[data-a=close]').onclick=close;
 ov.querySelector('[data-a=reset]').onclick=()=>{s=1;x=0;y=0;apply()};
@@ -1680,6 +1689,33 @@ ov.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;
   x+=m1.x-m0.x;y+=m1.y-m0.y;zoomAt(m1.x,m1.y,s*d1/d0)}
  else{const p=P.get(e.pointerId);x+=e.clientX-p.x;y+=e.clientY-p.y;P.set(e.pointerId,{x:e.clientX,y:e.clientY});if(s>1)apply();else{x=0;y=0}}});
 ['pointerup','pointercancel'].forEach(t=>ov.addEventListener(t,e=>P.delete(e.pointerId)));
+})();
+</script>
+<script>
+(function(){
+const ST='img',KEY='current';
+const $=id=>document.getElementById('dr_'+id);
+const openDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('doctorRosterDB',1);r.onupgradeneeded=()=>r.result.createObjectStore(ST);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const db=(mode,fn)=>openDB().then(d=>new Promise((res,rej)=>{const t=d.transaction(ST,mode),q=fn(t.objectStore(ST));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)}));
+function compress(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();
+ im.onload=()=>{const M=2400,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(),'image/jpeg',.88)};
+ im.onerror=()=>{URL.revokeObjectURL(u);rej()};im.src=u})}
+let url=null;
+async function show(){
+ let blob=null;try{blob=await db('readonly',s=>s.get(KEY))}catch(e){}
+ if(url){URL.revokeObjectURL(url);url=null}
+ if(blob){url=URL.createObjectURL(blob);$('img').src=url}
+ $('btn').classList.toggle('rhide',!!blob);
+ $('box').classList.toggle('rhide',!blob);
+}
+$('btn').onclick=()=>$('file').click();
+$('file').onchange=async e=>{
+ const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const blob=await compress(f);await db('readwrite',s=>s.put(blob,KEY));await show()}catch(err){alert('อัพโหลดรูปไม่สำเร็จ')}
+};
+$('del').onclick=async()=>{if(!confirm('ลบรูปนี้?'))return;try{await db('readwrite',s=>s.delete(KEY))}catch(e){}await show()};
+$('img').onclick=()=>{if(url&&window.openImgViewer)window.openImgViewer(url)};
+show();
 })();
 </script>
 </body>
