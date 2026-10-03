@@ -1599,3 +1599,170 @@ dl();resetOff();setMode(mode);
 </script>
 </body>
 </html>
+<!-- ===== ADD-ON: อัปโหลดรูปตารางเวร → ใส่ปฏิทินอัตโนมัติ =====
+     วางทั้งไฟล์นี้ "ก่อนบรรทัด </body>" ของ html เดิม (ไม่ต้องแก้ส่วนอื่นเลย) -->
+<script type="module">
+import { getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+let db=null; try{ db=getFirestore(getApp()); }catch(e){}
+window.rosterImgSave=async(k,d)=>{ if(!db) return false; try{ await setDoc(doc(db,"nurse_roster_images",k),{image:d,updatedAt:Date.now()}); return true; }catch(e){ console.error(e); return false; } };
+window.rosterImgLoad=async k=>{ if(!db) return null; try{ const s=await getDoc(doc(db,"nurse_roster_images",k)); return s.exists()?s.data().image:null; }catch(e){ return null; } };
+</script>
+<script>
+(function(){
+const MODEL='claude-sonnet-5-5';           // เปลี่ยนรุ่นได้ที่นี่
+const $=id=>document.getElementById(id), pad=n=>String(n).padStart(2,'0');
+const LS={g:(k,d)=>{try{return localStorage.getItem(k)??d}catch(e){return d}},s:(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}}};
+const SH=[['ช','เช้า'],['บ','บ่าย'],['ด','ดึก'],['C','Colonoscope'],['Vac','Vacation']];
+const WD=['อา','จ','อ','พ','พฤ','ศ','ส'];
+let P={},ym={y:0,m:0},imgApi='',imgStore='',tot=null,notes=[];
+
+/* ---------- UI ---------- */
+const bar=document.createElement('div');
+bar.className='flex gap-2 justify-center';
+bar.innerHTML=`<button id="ri-up" class="px-4 py-2 rounded-xl bg-sky-600 text-white text-xs font-bold shadow-sm hover:bg-sky-700 transition">📷 อัปเดตตารางเวร</button>
+<button id="ri-view" class="px-4 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold shadow-sm hover:bg-slate-100 transition">🖼️ ดูรูปตารางเวร</button>
+<input id="ri-file" type="file" accept="image/*" class="hidden">`;
+$('tab-content-schedule').children[0].after(bar);
+
+document.body.insertAdjacentHTML('beforeend',`
+<div id="ri-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-3 z-[60]">
+ <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-4 max-h-[92vh] overflow-y-auto text-slate-800">
+  <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-base">📷 อ่านตารางเวรจากรูป</h3><button id="ri-x" class="text-slate-400 text-xl px-2">✕</button></div>
+  <img id="ri-thumb" class="w-full max-h-40 object-contain rounded-lg border border-slate-200 bg-slate-50 mb-3 cursor-pointer" alt="">
+  <div class="grid grid-cols-1 gap-2 mb-3 text-xs">
+   <label>ชื่อในตารางเวร<input id="ri-name" class="w-full border border-slate-300 rounded-lg p-2 mt-1 text-sm"></label>
+   <label>Anthropic API Key (เก็บในเครื่องนี้เท่านั้น)<input id="ri-key" type="password" placeholder="sk-ant-..." class="w-full border border-slate-300 rounded-lg p-2 mt-1 text-sm"></label>
+  </div>
+  <button id="ri-read" class="w-full py-2.5 rounded-xl bg-sky-600 text-white text-sm font-bold hover:bg-sky-700 transition">🔍 อ่านตารางเวร</button>
+  <div id="ri-status" class="text-xs text-slate-500 mt-2 min-h-[1rem]"></div>
+  <div id="ri-review" class="hidden mt-3">
+   <div class="flex gap-2 items-center mb-2 text-xs"><span class="font-bold">เดือน</span>
+    <select id="ri-m" class="border border-slate-300 rounded-lg p-1.5"></select>
+    <input id="ri-y" type="number" class="border border-slate-300 rounded-lg p-1.5 w-20"><span>พ.ศ.</span></div>
+   <div id="ri-warn" class="text-xs rounded-lg p-2 mb-2 hidden"></div>
+   <div class="text-[11px] text-slate-500 mb-1">แตะเพื่อแก้ไขได้ ก่อนกดยืนยัน (📞 = จุดน้ำเงิน ต้องถือโทรศัพท์)</div>
+   <div id="ri-rows" class="border border-slate-200 rounded-lg px-2"></div>
+   <div class="flex justify-end gap-2 mt-3"><button id="ri-cancel" class="px-4 py-2 rounded-xl text-slate-600 text-sm hover:bg-slate-100">ยกเลิก</button>
+    <button id="ri-apply" class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">ยืนยัน ใส่ในปฏิทิน</button></div>
+  </div>
+ </div>
+</div>
+<div id="ri-viewer" class="fixed inset-0 bg-black/90 hidden z-[70] flex-col">
+ <div class="flex justify-between items-center p-3 text-white text-sm"><span id="ri-vt" class="font-bold"></span>
+  <span class="flex gap-2"><button id="ri-zo" class="px-3 py-1 bg-white/20 rounded-lg">－</button><button id="ri-zi" class="px-3 py-1 bg-white/20 rounded-lg">＋</button><button id="ri-vx" class="px-3 py-1 bg-white/20 rounded-lg">✕</button></span></div>
+ <div class="flex-1 overflow-auto"><img id="ri-vimg" style="width:100%;max-width:none" alt=""></div>
+</div>`);
+$('ri-m').innerHTML=monthNames.map((n,i)=>`<option value="${i+1}">${n}</option>`).join('');
+$('ri-name').value=LS.g('ri_name','ณรงค์พล'); $('ri-key').value=LS.g('ri_key','');
+const st=t=>$('ri-status').textContent=t;
+const show=(id,on)=>{$(id).classList.toggle('hidden',!on);$(id).classList.toggle('flex',on&&(id==='ri-modal'||id==='ri-viewer'))};
+const close=()=>show('ri-modal',false);
+
+/* ---------- เลือกรูป ---------- */
+$('ri-up').onclick=()=>{$('ri-file').value='';$('ri-file').click()};
+$('ri-file').onchange=async e=>{
+ const f=e.target.files[0]; if(!f) return;
+ try{
+  const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(f)});
+  imgApi=shrink(img,2000,.88); imgStore=shrink(img,1600,.7);
+  for(let q=.6;imgStore.length>850000&&q>.3;q-=.1) imgStore=shrink(img,1400,q);
+ }catch(err){ alert('เปิดรูปนี้ไม่ได้ ลองถ่ายหรือบันทึกเป็น JPG/PNG'); return; }
+ $('ri-thumb').src=imgApi; $('ri-review').classList.add('hidden'); st('');
+ ym={y:currentDate.getFullYear(),m:currentDate.getMonth()+1}; show('ri-modal',true);
+};
+function shrink(img,max,q){const r=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q)}
+$('ri-x').onclick=$('ri-cancel').onclick=close;
+$('ri-thumb').onclick=()=>openViewer(imgApi,'รูปที่เลือก');
+
+/* ---------- อ่านด้วย AI ---------- */
+const prompt=n=>`นี่คือรูปตารางเวรพยาบาลห้องผ่าตัด (ภาษาไทย) แถวบนสุดคือวันที่ 1-31 ของเดือน ให้หาแถวของคนที่ชื่อมีคำว่า "${n}" แล้วอ่านช่องของแต่ละวันตามคอลัมน์วันที่
+กติกา:
+- ช่องมีตัวอักษรได้แก่ ช (เช้า) บ (บ่าย) ด (ดึก) C (colonoscopy) และคำว่า vac (ลาพักผ่อน); อาจรวมกันในช่องเดียว เช่น "ชบ" "ดบ" "ดชบ" ตัวอักษร ด อาจดูคล้าย ค ให้ตอบเป็น ด
+- ช่องว่าง = ""; อ่านไม่ออก = "?" ห้ามเดา
+- phone = true ถ้ามีจุด/วงกลมสีน้ำเงินอยู่มุมบนของช่องนั้น
+- อ่านยอดรวมท้ายแถวของคนนี้ในคอลัมน์ ช บ ด (เวร on call) ด้วย
+- เดือนและปีอ่านจากหัวตาราง (ปี พ.ศ.)
+ตอบเป็น JSON อย่างเดียว ไม่มีข้อความอื่น:
+{"month":10,"year_be":2569,"name_found":"...","days":{"1":{"code":"ด","phone":false}},"totals":{"ช":0,"บ":0,"ด":0}}`;
+$('ri-read').onclick=async()=>{
+ const key=$('ri-key').value.trim(),name=$('ri-name').value.trim();
+ if(!key||!name){st('กรอกชื่อและ API Key ก่อน');return}
+ LS.s('ri_key',key);LS.s('ri_name',name);
+ $('ri-read').disabled=true;st('กำลังอ่านตาราง... (ประมาณ 10-30 วินาที)');
+ try{
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+   body:JSON.stringify({model:MODEL,max_tokens:4000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgApi.split(',')[1]}},{type:'text',text:prompt(name)}]}]})});
+  const j=await r.json(); if(!r.ok) throw new Error(j.error?.message||r.status);
+  const t=j.content.map(c=>c.text||'').join(''),res=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1));
+  build(res); st('อ่านเสร็จแล้ว ตรวจสอบก่อนยืนยัน');
+ }catch(e){ st('ผิดพลาด: '+e.message); }
+ $('ri-read').disabled=false;
+};
+function parseCode(c){
+ const s=new Set(),unk=[]; let x=String(c||'');
+ if(/vac/i.test(x)){s.add('Vac');x=x.replace(/vac/ig,'')}
+ for(const ch of x){ if(ch==='ช')s.add('ช'); else if(ch==='บ')s.add('บ'); else if(ch==='ด'||ch==='ค')s.add('ด'); else if(ch==='C'||ch==='c')s.add('C'); else if(!/[\s,.\-]/.test(ch))unk.push(ch) }
+ return {s,unk};
+}
+function build(res){
+ let y=+res.year_be||0; if(y>2400)y-=543; const m=+res.month||0;
+ if(y&&m>=1&&m<=12) ym={y,m};
+ $('ri-m').value=ym.m;$('ri-y').value=ym.y+543;
+ const n=new Date(ym.y,ym.m,0).getDate(); P={}; notes=[]; tot=res.totals||null;
+ for(let d=1;d<=n;d++){const o=(res.days||{})[d]||{},p=parseCode(o.code);P[d]={s:p.s,p:!!o.phone};if(p.unk.length||String(o.code).includes('?'))notes.push(d)}
+ draw(); show('ri-review',true);
+}
+function draw(){
+ const n=new Date(ym.y,ym.m,0).getDate(); let h='';
+ const cnt={ช:0,บ:0,ด:0};
+ for(let d=1;d<=n;d++){
+  const wd=new Date(ym.y,ym.m-1,d).getDay(),p=P[d]||(P[d]={s:new Set(),p:false});
+  p.s.forEach(k=>{if(cnt[k]!==undefined)cnt[k]++});
+  h+=`<div class="flex items-center gap-1 py-1 border-b border-slate-100 last:border-0 ${wd%6==0?'bg-slate-50':''}">
+   <span class="w-14 text-xs font-semibold ${wd==0||wd==6?'text-rose-600':''}">${d} ${WD[wd]}${notes.includes(d)?' ⚠️':''}</span>`+
+   SH.map(([k])=>`<button onclick="riT(${d},'${k}')" class="px-2 py-1 rounded-lg border text-[11px] font-bold ${p.s.has(k)?'bg-sky-600 text-white border-sky-600':'bg-white text-slate-400 border-slate-200'}">${k}</button>`).join('')+
+   `<button onclick="riT(${d},'p')" class="px-2 py-1 rounded-lg border text-[11px] ${p.p?'bg-slate-700 text-white border-slate-700':'bg-white text-slate-300 border-slate-200'}">📞</button></div>`;
+ }
+ $('ri-rows').innerHTML=h;
+ const w=$('ri-warn'); let msg='',bad=false;
+ if(tot&&['ช','บ','ด'].some(k=>+tot[k]>=0&&+tot[k]!==cnt[k])){bad=true;msg=`ยอดรวมในตาราง ช ${tot['ช']} / บ ${tot['บ']} / ด ${tot['ด']} แต่ที่อ่านได้ ช ${cnt['ช']} / บ ${cnt['บ']} / ด ${cnt['ด']} — อาจอ่านผิด ตรวจกับรูปอีกครั้ง`}
+ else if(tot) msg='ยอดรวม ช/บ/ด ตรงกับตารางเวร ✓';
+ if(notes.length) msg+=(msg?'<br>':'')+'⚠️ มีบางช่องอ่านไม่ชัด: วันที่ '+notes.join(', ');
+ w.innerHTML=msg;w.className='text-xs rounded-lg p-2 mb-2 '+(msg?(bad||notes.length?'bg-amber-50 text-amber-800':'bg-emerald-50 text-emerald-800'):'hidden');
+}
+window.riT=(d,k)=>{const p=P[d];if(k==='p')p.p=!p.p;else p.s.has(k)?p.s.delete(k):p.s.add(k);draw()};
+$('ri-m').onchange=$('ri-y').onchange=()=>{ym={y:(+$('ri-y').value||2569)-543,m:+$('ri-m').value};P={};notes=[];tot=null;draw()};
+
+/* ---------- ใส่ลงปฏิทิน (ไม่ลบรายได้เดิม) ---------- */
+$('ri-apply').onclick=async()=>{
+ const {y,m}=ym,n=new Date(y,m,0).getDate(),jobs=[];
+ for(let d=1;d<=n;d++){
+  const p=P[d]; if(!p||!p.s.size) continue;
+  const ds=`${y}-${pad(m)}-${pad(d)}`,old=shiftsData[ds]||{},oldList=old.shiftDetails||[],list=[];
+  p.s.forEach(k=>{const name=SH.find(x=>x[0]===k)[1];
+   list.push(oldList.find(x=>x.shift===name)||(name==='Vacation'?{shift:name,note:''}:name==='Colonoscope'?{shift:name,major:0,minor:0}:{shift:name,obs:false,oncall:false,major:0,minor:0}))});
+  oldList.forEach(x=>{ if(!list.includes(x)&&(x.obs||x.oncall||(+x.major||0)>0||(+x.minor||0)>0)) list.push(x) }); // กันรายได้เดิมหาย
+  const data={shiftDetails:list,isCall:!!(p.p||old.isCall),isDoctor:!!old.isDoctor};
+  shiftsData[ds]=data; jobs.push(window.saveCloudShift(ds,data));
+ }
+ st('กำลังบันทึก...'); await Promise.all(jobs);
+ const key=`${y}-${pad(m)}`; LS.s('rosterimg_'+key,imgStore); const ok=await window.rosterImgSave(key,imgStore);
+ currentDate=new Date(y,m-1,1); renderAll(); close();
+ if(!ok) alert('บันทึกเวรแล้ว แต่รูปถูกเก็บไว้เฉพาะเครื่องนี้ (Firestore ไม่อนุญาตคอลเลกชัน nurse_roster_images)');
+};
+
+/* ---------- ดูรูป ---------- */
+let zoom=100;
+function openViewer(src,t){ $('ri-vimg').src=src;$('ri-vt').textContent=t;zoom=100;$('ri-vimg').style.width='100%';show('ri-viewer',true) }
+$('ri-zi').onclick=()=>{zoom=Math.min(500,zoom+50);$('ri-vimg').style.width=zoom+'%'};
+$('ri-zo').onclick=()=>{zoom=Math.max(100,zoom-50);$('ri-vimg').style.width=zoom+'%'};
+$('ri-vx').onclick=()=>show('ri-viewer',false);
+$('ri-view').onclick=async()=>{
+ const key=`${currentDate.getFullYear()}-${pad(currentDate.getMonth()+1)}`;
+ const src=LS.g('rosterimg_'+key,null)||await window.rosterImgLoad(key);
+ if(!src){alert('เดือนนี้ยังไม่มีรูปตารางเวรที่อัปโหลดไว้');return}
+ openViewer(src,`ตารางเวร ${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()+543}`);
+};
+})();
+</script>
