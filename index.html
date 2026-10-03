@@ -1584,7 +1584,7 @@ function buildIn(){
 }
 function buildOut(){
   const d=dv(),o=gO(d);let t=`รายชื่อแพทย์ปฏิบัติหน้าที่นอกเวลาราชการ\nประจำวันที่ ${thDate(d)}\n`;
-  ROSTER.forEach(([n,k])=>{if(o.r[k])t+=`\n${n}\n- ${o.r[k]}\n`});
+  ROSTER.forEach(([n,k])=>{t+=`\n${n}\n${o.r[k]?"- "+o.r[k]:"-"}\n`});
   if(o.none)t+="\n____________________\nยังไม่มี case นอกเวลาราชการ\n";
   else if(o.items.length){t+="\n____________________\n";grp(o.items).forEach(([doc,g],gi)=>{t+=(gi?"\n":"")+`${doc}\n`;g.forEach(({it})=>{t+=`- ${ofmt(it)}\n`})})}
   return t.trim();
