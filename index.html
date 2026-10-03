@@ -200,6 +200,7 @@
 #tab-content-report .btn.g{background:transparent;color:var(--r-tx);border:1px solid var(--r-bd)}
 #tab-content-report .btn.w{width:100%}
 #tab-content-report .case{white-space:pre-line;border-left:4px solid var(--r-pri)}
+#tab-content-report .case{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #tab-content-report .case .h{font-weight:700}
 #tab-content-report .acts{display:flex;gap:8px;margin-top:8px}
 #tab-content-report .acts button{font-size:13px;padding:5px 12px}
@@ -1551,8 +1552,49 @@ function card(head,body,onEdit,onDel){
 function renderIn(){
   const d=dv(),arr=cases[d]||[],el=$("list");el.innerHTML="";
   if(!arr.length){el.innerHTML='<p class="mut" style="text-align:center">ยังไม่มีเคสในวันนี้</p>';return}
-  arr.map((c,i)=>({c,i})).sort((a,b)=>a.c.room-b.c.room||a.i-b.i).forEach(({c,i})=>el.appendChild(card(`📌 ห้อง ${c.room}`,fmt(c),()=>edit(i),()=>{cases[d].splice(i,1);ls.set("cases",cases);render()})));
+  arr.map((c,i)=>({c,i})).sort((a,b)=>a.c.room-b.c.room||a.i-b.i).forEach(({c,i})=>{const cd=card(`📌 ห้อง ${c.room}`,fmt(c),()=>edit(i),()=>{cases[d].splice(i,1);ls.set("cases",cases);render()});cd.dataset.i=i;cd.dataset.room=c.room;el.appendChild(cd)});
 }
+/* กดแช่เพื่อลากสลับลำดับเคส (เฉพาะห้องเดียวกัน) */
+(function(){
+  const list=$("list");let timer=null,drag=null,iv=null,sx=0,sy=0,lastY=0;
+  const cardsOf=()=>[...list.querySelectorAll(".case")];
+  function begin(card,y){
+    const r=card.getBoundingClientRect();
+    drag={card,grab:y-r.top,room:card.dataset.room};lastY=y;
+    card.style.position="relative";card.style.zIndex="5";card.style.transition="none";card.style.boxShadow="0 10px 28px rgba(0,0,0,.28)";card.style.opacity=".95";
+    if(navigator.vibrate)navigator.vibrate(25);
+    iv=setInterval(()=>{if(!drag)return;if(lastY<90)scrollBy(0,-12);else if(lastY>innerHeight-90)scrollBy(0,12);else return;move(lastY)},16);
+  }
+  function move(y){
+    if(!drag)return;lastY=y;const c=drag.card;c.style.transform="";
+    const grp=cardsOf().filter(x=>x.dataset.room===drag.room);
+    const nat=c.getBoundingClientRect(),h=nat.height;
+    const minTop=grp[0].getBoundingClientRect().top,maxBot=grp[grp.length-1].getBoundingClientRect().bottom;
+    const top=Math.max(minTop,Math.min(y-drag.grab,maxBot-h)),center=top+h/2,idx=grp.indexOf(c);
+    const mid=e=>{const r=e.getBoundingClientRect();return r.top+r.height/2};
+    const prev=grp[idx-1],next=grp[idx+1];
+    if(prev&&center<mid(prev))list.insertBefore(c,prev);
+    else if(next&&center>mid(next))list.insertBefore(c,next.nextSibling);
+    c.style.transform=`translateY(${top-c.getBoundingClientRect().top}px)`;
+  }
+  function finish(){
+    clearTimeout(timer);timer=null;if(!drag)return;
+    clearInterval(iv);const room=drag.room;drag=null;
+    const d=dv(),arr=cases[d]||[];
+    const order=cardsOf().filter(x=>x.dataset.room===room).map(x=>+x.dataset.i);
+    const pos=[...order].sort((a,b)=>a-b),na=arr.slice();
+    pos.forEach((p,k)=>{na[p]=arr[order[k]]});
+    cases[d]=na;ls.set("cases",cases);render();
+  }
+  const start=(e,x,y)=>{const card=e.target.closest(".case");if(!card||e.target.closest("button"))return;sx=x;sy=y;clearTimeout(timer);timer=setTimeout(()=>begin(card,sy),350)};
+  list.addEventListener("touchstart",e=>start(e,e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+  list.addEventListener("touchmove",e=>{const t=e.touches[0];if(drag){e.preventDefault();move(t.clientY)}else if(timer&&Math.hypot(t.clientX-sx,t.clientY-sy)>10){clearTimeout(timer);timer=null}},{passive:false});
+  list.addEventListener("touchend",finish);list.addEventListener("touchcancel",finish);
+  list.addEventListener("contextmenu",e=>{if(e.target.closest(".case"))e.preventDefault()});
+  list.addEventListener("mousedown",e=>{if(e.button===0)start(e,e.clientX,e.clientY)});
+  document.addEventListener("mousemove",e=>{if(drag)move(e.clientY);else if(timer&&Math.hypot(e.clientX-sx,e.clientY-sy)>10){clearTimeout(timer);timer=null}});
+  document.addEventListener("mouseup",finish);
+})();
 function edit(i){
   const c=cases[dv()][i];resetForm();editId=i;cur={room:c.room,sex:c.sex||null,amn:c.amn,oncall:c.oncall};
   $("age").value=c.age;$("comorb").value=c.comorb;$("diag").value=c.diag;$("op").value=c.op;$("premed").value=c.premed||"";$("npoTime").value=c.npoTime;$("setor").value=c.setor;$("other").value=c.other||"";$("doc").value=c.doc;
