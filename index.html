@@ -519,6 +519,7 @@
     <label class="t">โรคประจำตัว</label><input id="r_comorb" list="r_dl-comorb" autocomplete="off">
     <label class="t">Diagnosis</label><input id="r_diag" list="r_dl-diag" autocomplete="off">
     <label class="t">Operation</label><input id="r_op" list="r_dl-op" autocomplete="off">
+    <label class="t">Premed</label><input id="r_premed" list="r_dl-premed" autocomplete="off">
     <label class="t">NPO</label>
     <div class="row"><button class="chip" id="r_amn" type="button">AMN</button><input type="text" id="r_npoTime" placeholder="ระบุเวลา"></div>
     <label class="t">Set OR</label>
@@ -545,7 +546,7 @@
   <div id="r_olist"></div>
 </div>
 
-<datalist id="r_dl-comorb"></datalist><datalist id="r_dl-diag"></datalist><datalist id="r_dl-op"></datalist><datalist id="r_dl-case"></datalist>
+<datalist id="r_dl-comorb"></datalist><datalist id="r_dl-diag"></datalist><datalist id="r_dl-op"></datalist><datalist id="r_dl-premed"></datalist><datalist id="r_dl-case"></datalist>
 <button class="btn w" id="r_shareBtn">แชร์ข้อมูล</button>
 <div class="card rhide" id="r_shareBox" style="margin-top:12px">
   <textarea id="r_out" readonly></textarea>
@@ -1482,7 +1483,7 @@ const TM=["มกราคม","กุมภาพันธ์","มีนาค
 const $=id=>document.getElementById("r_"+id),pad=n=>String(n).padStart(2,"0");
 const ls={get(k,d){try{const v=(localStorage.getItem("rpt_"+k)??localStorage.getItem(k));return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("rpt_"+k,JSON.stringify(v))}catch(e){}}};
 let cases=ls.get("cases",{}),off=ls.get("off",{}),mode=ls.get("mode","in");
-let hist=Object.assign({comorb:[],diag:[],op:[],ocase:[]},ls.get("hist",{}));
+let hist=Object.assign({comorb:[],diag:[],op:[],premed:[],ocase:[]},ls.get("hist",{}));
 let cur={room:null,sex:null,amn:false,oncall:false},editId=null,os={status:null},oEdit=null;
 const t0=new Date();
 $("date").value=ls.get("date",`${t0.getFullYear()}-${pad(t0.getMonth()+1)}-${pad(t0.getDate())}`);
@@ -1492,7 +1493,7 @@ function toast(t){let e=$("toast");if(!e){e=document.createElement("div");e.id="
 function fill(sel,arr,first){sel.innerHTML="";if(first!==undefined)sel.add(new Option(first,""));arr.forEach(d=>sel.add(new Option(d,d)))}
 fill($("doc"),DOCS,"-");fill($("odoc"),DOCS,"-");
 function chips(id,arr,st,key){const el=$(id);el.innerHTML="";arr.forEach(x=>{const b=document.createElement("button");b.type="button";b.className="chip"+(st[key]===x?" on":"");b.textContent=x;b.onclick=()=>{st[key]=st[key]===x?null:x;chips(id,arr,st,key)};el.appendChild(b)})}
-function dl(){[["comorb","dl-comorb"],["diag","dl-diag"],["op","dl-op"],["ocase","dl-case"]].forEach(([k,id])=>{$(id).innerHTML=hist[k].map(x=>`<option value="${x.replace(/"/g,"&quot;")}">`).join("")})}
+function dl(){[["comorb","dl-comorb"],["diag","dl-diag"],["op","dl-op"],["premed","dl-premed"],["ocase","dl-case"]].forEach(([k,id])=>{$(id).innerHTML=hist[k].map(x=>`<option value="${x.replace(/"/g,"&quot;")}">`).join("")})}
 function remember(k,x){x=x.trim();if(!x)return;hist[k]=[x,...hist[k].filter(y=>y!==x)].slice(0,100)}
 
 /* mode */
@@ -1505,7 +1506,7 @@ function syncDate(){const x=`${$("dy").value}-${pad($("dm").value)}-${pad($("dd"
 (function(){const[y,m,d]=dv().split("-").map(Number);TM.forEach((n,i)=>$("dm").add(new Option(n,i+1)));for(let k=y-2;k<=y+3;k++)$("dy").add(new Option(k+543,k));$("dm").value=m;$("dy").value=y;fillDays(d);$("dd").onchange=syncDate;$("dm").onchange=$("dy").onchange=()=>{fillDays(+$("dd").value);syncDate()}})();
 
 /* ในเวลาราชการ */
-function resetForm(){cur={room:null,sex:null,amn:false,oncall:false};editId=null;["age","comorb","diag","op","npoTime","setor","other"].forEach(i=>$(i).value="");$("doc").value="";$("amn").classList.remove("on");$("oncall").classList.remove("on");$("otherChip").classList.remove("on");chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex")}
+function resetForm(){cur={room:null,sex:null,amn:false,oncall:false};editId=null;["age","comorb","diag","op","premed","npoTime","setor","other"].forEach(i=>$(i).value="");$("doc").value="";$("amn").classList.remove("on");$("oncall").classList.remove("on");$("otherChip").classList.remove("on");chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex")}
 $("amn").onclick=()=>{cur.amn=!cur.amn;$("amn").classList.toggle("on",cur.amn)};
 $("oncall").onclick=()=>{cur.oncall=!cur.oncall;$("oncall").classList.toggle("on",cur.oncall)};
 $("other").oninput=()=>$("otherChip").classList.toggle("on",!!$("other").value.trim());
@@ -1513,8 +1514,8 @@ $("addBtn").onclick=()=>{resetForm();$("form").classList.remove("rhide");$("form
 $("cancel").onclick=()=>$("form").classList.add("rhide");
 $("save").onclick=()=>{
   const d=dv();if(!cur.room){toast("กรุณาเลือกห้อง");return}
-  const c={room:cur.room,sex:cur.sex||"",age:$("age").value,comorb:$("comorb").value.trim(),diag:$("diag").value.trim(),op:$("op").value.trim(),amn:cur.amn,npoTime:$("npoTime").value.trim(),oncall:cur.oncall,setor:$("setor").value.trim(),other:$("other").value.trim(),doc:$("doc").value};
-  remember("comorb",c.comorb);remember("diag",c.diag);remember("op",c.op);ls.set("hist",hist);dl();
+  const c={room:cur.room,sex:cur.sex||"",age:$("age").value,comorb:$("comorb").value.trim(),diag:$("diag").value.trim(),op:$("op").value.trim(),premed:$("premed").value.trim(),amn:cur.amn,npoTime:$("npoTime").value.trim(),oncall:cur.oncall,setor:$("setor").value.trim(),other:$("other").value.trim(),doc:$("doc").value};
+  remember("comorb",c.comorb);remember("diag",c.diag);remember("op",c.op);remember("premed",c.premed);ls.set("hist",hist);dl();
   cases[d]=cases[d]||[];if(editId!==null)cases[d][editId]=c;else cases[d].push(c);
   ls.set("cases",cases);$("form").classList.add("rhide");render();
 };
@@ -1524,6 +1525,7 @@ function fmt(c){
   if(l1)L.push(l1);
   if(c.diag)L.push("Diagnosis : "+c.diag);
   if(c.op)L.push("Operation : "+c.op);
+  if(c.premed)L.push("Premed : "+c.premed);
   const npo=[c.amn?"AMN":"",c.npoTime].filter(Boolean).join(" ");
   if(npo)L.push("NPO "+npo);
   const so=c.other?c.other:(c.oncall||c.setor)?["Set OR",c.oncall?"On call":"",c.setor].filter(Boolean).join(" "):"";
@@ -1545,7 +1547,7 @@ function renderIn(){
 }
 function edit(i){
   const c=cases[dv()][i];resetForm();editId=i;cur={room:c.room,sex:c.sex||null,amn:c.amn,oncall:c.oncall};
-  $("age").value=c.age;$("comorb").value=c.comorb;$("diag").value=c.diag;$("op").value=c.op;$("npoTime").value=c.npoTime;$("setor").value=c.setor;$("other").value=c.other||"";$("doc").value=c.doc;
+  $("age").value=c.age;$("comorb").value=c.comorb;$("diag").value=c.diag;$("op").value=c.op;$("premed").value=c.premed||"";$("npoTime").value=c.npoTime;$("setor").value=c.setor;$("other").value=c.other||"";$("doc").value=c.doc;
   $("amn").classList.toggle("on",c.amn);$("oncall").classList.toggle("on",c.oncall);$("otherChip").classList.toggle("on",!!c.other);
   chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex");$("form").classList.remove("rhide");$("form").scrollIntoView({behavior:"smooth"});
 }
