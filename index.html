@@ -230,9 +230,9 @@
 
         <!-- TAB 1: Schedule View -->
         <div id="tab-content-schedule" class="space-y-4">
-            <!-- Month Navigation & Controls & OCR Upload Button -->
-            <div class="bg-white rounded-2xl shadow-sm p-3 relative flex flex-col sm:flex-row justify-between items-center gap-3">
-                <div class="flex items-center gap-3 w-full sm:w-auto justify-center">
+            <!-- Month Navigation & Controls -->
+            <div class="bg-white rounded-2xl shadow-sm p-3 relative flex justify-center items-center">
+                <div class="flex items-center gap-3">
                     <button onclick="changeMonth(-1)" class="p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&lt;</button>
                     <div class="min-w-[180px] text-center">
                         <h2 id="schedule-month-year-display" class="text-xl font-bold text-slate-700">มกราคม</h2>
@@ -240,15 +240,7 @@
                     </div>
                     <button onclick="changeMonth(1)" class="p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-600 font-bold">&gt;</button>
                 </div>
-                
-                <div class="flex items-center gap-2">
-                    <!-- ปุ่มอัปโหลดรูปตารางเวร -->
-                    <label class="cursor-pointer bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5">
-                        <span>📤 อัปเดตตารางเวรจากรูป</span>
-                        <input type="file" id="schedule-ocr-input" accept="image/*" class="hidden" onchange="handleScheduleImageUpload(event)">
-                    </label>
-                    <button onclick="goToCurrentMonth()" class="text-xs bg-sky-100 text-sky-700 w-9 h-9 rounded-xl font-medium hover:bg-sky-200 transition flex items-center justify-center shadow-xs" title="เดือนปัจจุบัน">🧸</button>
-                </div>
+                <button onclick="goToCurrentMonth()" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-sky-100 text-sky-700 w-8 h-8 rounded-lg font-medium hover:bg-sky-200 transition flex items-center justify-center shadow-xs" title="เดือนปัจจุบัน">🧸</button>
             </div>
 
             <!-- Calendar Grid (Schedule View) -->
@@ -651,6 +643,7 @@
             const off = 'text-slate-600 hover:text-slate-800';
             const cls = 'px-3 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 ';
 
+            // แท็บแรก: ในหน้ารายได้ = 💵 รายได้ / หน้าอื่น = 🗓️ ตารางเวร (เหมือนเดิม)
             const first = (activeTab === 'income')
                 ? `<button onclick="switchTab('income')" class="${cls}${on}">💵 รายได้</button>`
                 : `<button onclick="switchTab('schedule')" class="${cls}${(!isCalc && !isReport) ? on : off}">🗓️ ตารางเวร</button>`;
@@ -699,84 +692,6 @@
             renderNotifications();
         }
 
-        /* --- ฟังก์ชันอัปโหลดรูปภาพตารางเวร (OCR แปลง ช, บ, ด, C, vac อัตโนมัติ) --- */
-        async function handleScheduleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const base64Data = e.target.result.split(',')[1];
-                const mimeType = file.type || 'image/jpeg';
-
-                // สร้าง Loading indicator เล็กๆ แจ้งเตือนผู้ใช้
-                const loadingDiv = document.createElement('div');
-                loadingDiv.id = 'ocr-loading';
-                loadingDiv.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white text-sm font-bold gap-2';
-                loadingDiv.innerHTML = `<div class="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>กำลังประมวลผลตารางเวรจากรูปภาพ...`;
-                document.body.appendChild(loadingDiv);
-
-                try {
-                    // เรียกใช้งาน Gemini API ภายในระบบเพื่อวิเคราะห์ภาพตารางเวร
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${firebaseConfig.apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [
-                                    { text: `คุณคือนักวิเคราะห์ข้อมูลตารางเวรพยาบาล ช่วยอ่านรูปภาพตารางเวรนี้สำหรับเดือน ${monthNames[currentDate.getMonth()]} ปี ${currentDate.getFullYear()} 
-                                    โดยดึงข้อมูลตารางเวรรายวัน โดยพิจารณาตัวอักษรย่อดังนี้:
-                                    - "ช" หรือ "เช้า" -> แปลงเป็นเวร "เช้า"
-                                    - "บ" หรือ "บ่าย" -> แปลงเป็นเวร "บ่าย"
-                                    - "ด" หรือ "ดึก" -> แปลงเป็นเวร "ดึก"
-                                    - "C" หรือ "Colonoscope" -> แปลงเป็นเวร "Colonoscope"
-                                    - "vac" หรือ "Vacation" -> แปลงเป็นเวร "Vacation"
-                                    
-                                    กรุณาส่งออกผลลัพธ์เป็น JSON Object เท่านั้น ในรูปแบบ:
-                                    {
-                                      "YYYY-MM-DD": ["เช้า"],
-                                      "YYYY-MM-DD": ["บ่าย", "ดึก"]
-                                    }
-                                    โดยระบุวันที่ให้ตรงกับปี ${currentDate.getFullYear()} และเดือน ${String(currentDate.getMonth() + 1).padStart(2, '0')}` },
-                                    { inline_data: { mime_type: mimeType, data: base64Data } }
-                                ]
-                            }]
-                        })
-                    });
-
-                    const result = await response.json();
-                    const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                    
-                    // สกัด JSON จากข้อความที่ AI ตอบกลับมา
-                    const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        const parsedShifts = JSON.parse(jsonMatch[0]);
-                        for (const [dateStr, shiftList] of Object.entries(parsedShifts)) {
-                            const details = shiftList.map(s => {
-                                if (s === 'Off' || s === 'Vacation') return { shift: s, note: '' };
-                                return { shift: s, obs: false, oncall: false, major: 0, minor: 0 };
-                            });
-                            
-                            shiftsData[dateStr] = { shiftDetails: details, isCall: false, isDoctor: false };
-                            await window.saveCloudShift(dateStr, shiftsData[dateStr]);
-                        }
-                        alert('อัปเดตตารางเวรจากรูปภาพสำเร็จ!');
-                        renderAll();
-                    } else {
-                        alert('ไม่สามารถอ่านข้อมูลจากรูปภาพได้ กรุณาลองใหม่อีกครั้ง');
-                    }
-                } catch (err) {
-                    console.error("OCR Error:", err);
-                    alert('เกิดข้อผิดพลาดในการประมวลผลรูปภาพ');
-                } finally {
-                    const el = document.getElementById('ocr-loading');
-                    if (el) el.remove();
-                    event.target.value = '';
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
         /* --- Notifications: เฉพาะวันที่ "ลงเวรไว้แล้ว" (มีข้อมูลใน shiftsData) แต่ยังไม่ได้กรอกรายได้ --- */
         function getPendingIncomeDates() {
             const today = new Date();
@@ -786,11 +701,12 @@
             Object.keys(shiftsData).forEach(dateStr => {
                 const parts = dateStr.split('-').map(Number);
                 const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-                if (dateObj >= today) return;
+                if (dateObj >= today) return; // เฉพาะวันที่ผ่านไปแล้ว
 
                 const data = shiftsData[dateStr];
                 const list = (data && data.shiftDetails) || [];
                 list.forEach(item => {
+                    // ข้าม Off/Vacation เพราะไม่มีรายได้ให้กรอก
                     if (item.shift === 'Off' || item.shift === 'Vacation') return;
 
                     const hasIncomeData = !!item.obs || !!item.oncall ||
@@ -843,6 +759,7 @@
             openModal(dateStr);
         }
 
+        // ปิด panel เมื่อคลิกนอกกรอบ
         document.addEventListener('click', function(e) {
             const panel = document.getElementById('notif-panel');
             const bell = e.target.closest('button[onclick="toggleNotificationPanel()"]');
@@ -1023,6 +940,7 @@
                 
                 cell.className = `${isWeekend ? 'bg-slate-100/90' : 'bg-white'} min-h-[90px] sm:min-h-[110px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 
+                // ดับเบิลคลิกเพื่อเข้าหน้า รายได้ และอัปเดต Tab ด้านบนให้เป็น 💵 รายได้ / 💊 คำนวณ
                 cell.ondblclick = () => switchTab('income');
 
                 let shiftBadgesHtml = '', incomeBoxHtml = '';
@@ -1627,7 +1545,7 @@ function renderIn(){
 }
 function edit(i){
   const c=cases[dv()][i];resetForm();editId=i;cur={room:c.room,sex:c.sex||null,amn:c.amn,oncall:c.oncall};
-  $("age").value=c.age;$("comorb").value=c.comorb;$("diag").value=c.diag;$("op").value=c.op;$("npoTime").value=c.npoTime;$("setor").value=c.setor;$("other").value=c.other\vert{}\vert{}"";$("doc").value=c.doc;
+  $("age").value=c.age;$("comorb").value=c.comorb;$("diag").value=c.diag;$("op").value=c.op;$("npoTime").value=c.npoTime;$("setor").value=c.setor;$("other").value=c.other||"";$("doc").value=c.doc;
   $("amn").classList.toggle("on",c.amn);$("oncall").classList.toggle("on",c.oncall);$("otherChip").classList.toggle("on",!!c.other);
   chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex");$("form").classList.remove("rhide");$("form").scrollIntoView({behavior:"smooth"});
 }
@@ -1674,6 +1592,10 @@ function buildOut(){
 $("shareBtn").onclick=()=>{$("out").value=mode==="in"?buildIn():buildOut();$("shareBox").classList.remove("rhide");$("shareBox").scrollIntoView({behavior:"smooth"})};
 $("copy").onclick=async()=>{const t=$("out").value,b=$("copy");try{await navigator.clipboard.writeText(t)}catch(e){$("out").select();document.execCommand("copy")}b.textContent="คัดลอกแล้ว ✓";setTimeout(()=>b.textContent="คัดลอกข้อความทั้งหมด",1800)};
 
+function render(){if(mode==="in")renderIn();else renderOut()}
+dl();resetOff();setMode(mode);
+
+})();
 </script>
 </body>
 </html>
