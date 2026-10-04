@@ -506,7 +506,7 @@
   <input type="file" id="dr_file" accept="image/*" style="display:none">
   <div id="dr_box" class="rhide">
     <img id="dr_img" alt="ตารางเวรแพทย์" style="width:100%;height:auto;display:block;border-radius:8px;border:1px solid var(--r-bd);cursor:pointer">
-    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" id="dr_del" type="button" style="background:#e11d48;color:#fff">🗑️ ลบรูป</button></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" id="dr_del" type="button" style="background:#e11d48;color:#fff;padding:4px 10px;font-size:12px;border-radius:8px">🗑️ ลบรูป</button></div>
   </div>
 </div>
 <div class="card">
@@ -525,7 +525,8 @@
     <label class="t" style="margin-top:0">ห้อง</label><div class="row" id="r_room"></div>
     <label class="t">เพศ</label><div class="row" id="r_sex"></div>
     <label class="t">อายุ (ปี)</label><input type="number" id="r_age" min="0" max="120" inputmode="numeric">
-    <label class="t">โรคประจำตัว</label><input id="r_comorb" list="r_dl-comorb" autocomplete="off">
+    <label class="t">โรคประจำตัว</label>
+    <div class="row"><button class="chip" id="r_nud" type="button">No U/D</button><input type="text" id="r_comorb" list="r_dl-comorb" autocomplete="off" placeholder="ระบุโรคประจำตัว"></div>
     <label class="t">Diagnosis</label><input id="r_diag" list="r_dl-diag" autocomplete="off">
     <label class="t">Operation</label><input id="r_op" list="r_dl-op" autocomplete="off">
     <label class="t">Premed</label><input id="r_premed" list="r_dl-premed" autocomplete="off">
@@ -535,6 +536,8 @@
     <div class="row"><button class="chip" id="r_oncall" type="button">On call</button><input type="text" id="r_setor" placeholder="ข้อความ"></div>
     <div class="row" style="margin-top:8px"><span class="chip" id="r_otherChip">อื่นๆ</span><input type="text" id="r_other" placeholder="ถ้ากรอก จะใช้ข้อความนี้แทน Set OR On call"></div>
     <label class="t">แพทย์</label><select id="r_doc"><option value="">-</option></select>
+    <div id="r_moveBox" class="rhide"><label class="t">วันที่ (เปลี่ยนเพื่อย้ายเคสไปวันอื่น)</label>
+      <div class="row" style="flex-wrap:nowrap"><select id="r_md" style="flex:.8"></select><select id="r_mm" style="flex:1.6"></select><select id="r_my" style="flex:1.1"></select></div></div>
     <div class="row" style="margin-top:16px"><button class="btn" id="r_save">บันทึก</button><button class="btn g" id="r_cancel">ยกเลิก</button></div>
   </div>
   <div id="r_list"></div>
@@ -1493,7 +1496,7 @@ const $=id=>document.getElementById("r_"+id),pad=n=>String(n).padStart(2,"0");
 const ls={get(k,d){try{const v=(localStorage.getItem("rpt_"+k)??localStorage.getItem(k));return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("rpt_"+k,JSON.stringify(v))}catch(e){}}};
 let cases=ls.get("cases",{}),off=ls.get("off",{}),mode=ls.get("mode","in");
 let hist=Object.assign({comorb:[],diag:[],op:[],premed:[],ocase:[]},ls.get("hist",{}));
-let cur={room:null,sex:null,amn:false,oncall:false},editId=null,os={status:null},oEdit=null;
+let cur={room:null,sex:null,amn:false,oncall:false,nud:false},editId=null,os={status:null},oEdit=null;
 const t0=new Date();
 $("date").value=ls.get("date",`${t0.getFullYear()}-${pad(t0.getMonth()+1)}-${pad(t0.getDate())}`);
 const dv=()=>$("date").value;
@@ -1515,7 +1518,12 @@ function syncDate(){const x=`${$("dy").value}-${pad($("dm").value)}-${pad($("dd"
 (function(){const[y,m,d]=dv().split("-").map(Number);TM.forEach((n,i)=>$("dm").add(new Option(n,i+1)));for(let k=y-2;k<=y+3;k++)$("dy").add(new Option(k+543,k));$("dm").value=m;$("dy").value=y;fillDays(d);$("dd").onchange=syncDate;$("dm").onchange=$("dy").onchange=()=>{fillDays(+$("dd").value);syncDate()}})();
 
 /* ในเวลาราชการ */
-function resetForm(){cur={room:null,sex:null,amn:false,oncall:false};editId=null;["age","comorb","diag","op","premed","npoTime","setor","other"].forEach(i=>$(i).value="");$("doc").value="";$("amn").classList.remove("on");$("oncall").classList.remove("on");$("otherChip").classList.remove("on");chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex")}
+function moveDays(s){const n=new Date(+$("my").value,+$("mm").value,0).getDate(),ds=$("md");ds.innerHTML="";for(let i=1;i<=n;i++)ds.add(new Option(i,i));ds.value=Math.min(s,n)}
+function moveFill(ds){const[y,m,d]=ds.split("-").map(Number);$("mm").innerHTML="";TM.forEach((n,i)=>$("mm").add(new Option(n,i+1)));$("my").innerHTML="";for(let k=y-2;k<=y+3;k++)$("my").add(new Option(k+543,k));$("mm").value=m;$("my").value=y;moveDays(d)}
+$("mm").onchange=$("my").onchange=()=>moveDays(+$("md").value);
+const moveVal=()=>`${$("my").value}-${pad($("mm").value)}-${pad($("md").value)}`;
+function resetForm(){$("moveBox").classList.add("rhide");cur={room:null,sex:null,amn:false,oncall:false,nud:false};$("nud").classList.remove("on");editId=null;["age","comorb","diag","op","premed","npoTime","setor","other"].forEach(i=>$(i).value="");$("doc").value="";$("amn").classList.remove("on");$("oncall").classList.remove("on");$("otherChip").classList.remove("on");chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex")}
+$("nud").onclick=()=>{cur.nud=!cur.nud;$("nud").classList.toggle("on",cur.nud)};
 $("amn").onclick=()=>{cur.amn=!cur.amn;$("amn").classList.toggle("on",cur.amn)};
 $("oncall").onclick=()=>{cur.oncall=!cur.oncall;$("oncall").classList.toggle("on",cur.oncall)};
 $("other").oninput=()=>$("otherChip").classList.toggle("on",!!$("other").value.trim());
@@ -1523,14 +1531,14 @@ $("addBtn").onclick=()=>{resetForm();$("form").classList.remove("rhide");$("form
 $("cancel").onclick=()=>$("form").classList.add("rhide");
 $("save").onclick=()=>{
   const d=dv();if(!cur.room){toast("กรุณาเลือกห้อง");return}
-  const c={room:cur.room,sex:cur.sex||"",age:$("age").value,comorb:$("comorb").value.trim(),diag:$("diag").value.trim(),op:$("op").value.trim(),premed:$("premed").value.trim(),amn:cur.amn,npoTime:$("npoTime").value.trim(),oncall:cur.oncall,setor:$("setor").value.trim(),other:$("other").value.trim(),doc:$("doc").value};
+  const c={room:cur.room,sex:cur.sex||"",age:$("age").value,comorb:$("comorb").value.trim(),diag:$("diag").value.trim(),op:$("op").value.trim(),premed:$("premed").value.trim(),nud:cur.nud,amn:cur.amn,npoTime:$("npoTime").value.trim(),oncall:cur.oncall,setor:$("setor").value.trim(),other:$("other").value.trim(),doc:$("doc").value};
   remember("comorb",c.comorb);remember("diag",c.diag);remember("op",c.op);remember("premed",c.premed);ls.set("hist",hist);dl();
-  cases[d]=cases[d]||[];if(editId!==null)cases[d][editId]=c;else cases[d].push(c);
-  ls.set("cases",cases);$("form").classList.add("rhide");render();
+  let mv=null;if(editId!==null){const nd=moveVal();if(nd!==d){cases[d].splice(editId,1);if(!cases[d].length)delete cases[d];(cases[nd]=cases[nd]||[]).push(c);mv=nd}else cases[d][editId]=c}else{(cases[d]=cases[d]||[]).push(c)}
+  ls.set("cases",cases);$("form").classList.add("rhide");render();if(mv)toast("ย้ายเคสไปวันที่ "+thDate(mv));
 };
 function fmt(c){
   const L=[];
-  const l1=[c.sex,c.age?c.age+" ปี":"",c.comorb?"โรคประจำตัว "+c.comorb:""].filter(Boolean).join(" ");
+  const l1=[c.sex,c.age?c.age+" ปี":"",c.comorb?"โรคประจำตัว "+c.comorb:(c.nud?"No U/D":"")].filter(Boolean).join(" ");
   if(l1)L.push(l1);
   if(c.diag)L.push("Diagnosis : "+c.diag);
   if(c.op)L.push("Operation : "+c.op);
@@ -1596,10 +1604,10 @@ function renderIn(){
   document.addEventListener("mouseup",finish);
 })();
 function edit(i){
-  const c=cases[dv()][i];resetForm();editId=i;cur={room:c.room,sex:c.sex||null,amn:c.amn,oncall:c.oncall};
+  const c=cases[dv()][i];resetForm();editId=i;cur={room:c.room,sex:c.sex||null,amn:c.amn,oncall:c.oncall,nud:!!c.nud};$("nud").classList.toggle("on",cur.nud);
   $("age").value=c.age;$("comorb").value=c.comorb;$("diag").value=c.diag;$("op").value=c.op;$("premed").value=c.premed||"";$("npoTime").value=c.npoTime;$("setor").value=c.setor;$("other").value=c.other||"";$("doc").value=c.doc;
   $("amn").classList.toggle("on",c.amn);$("oncall").classList.toggle("on",c.oncall);$("otherChip").classList.toggle("on",!!c.other);
-  chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex");$("form").classList.remove("rhide");$("form").scrollIntoView({behavior:"smooth"});
+  chips("room",[1,2,3,4],cur,"room");chips("sex",SEX,cur,"sex");moveFill(dv());$("moveBox").classList.remove("rhide");$("form").classList.remove("rhide");$("form").scrollIntoView({behavior:"smooth"});
 }
 
 /* นอกเวลาราชการ */
