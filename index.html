@@ -380,6 +380,12 @@
                 <button class="calc-sub-btn" onclick="setGender('female')">👩 ผู้หญิง</button>
             </div>
 
+            <!-- ลิงก์คำนวณยาเด็กแบบละเอียด (แสดงเฉพาะโหมดเด็ก) -->
+            <a id="ped-link-box" href="https://ped-tsh.web.app" target="_blank" rel="noopener"
+               class="block text-center bg-green-50 border border-green-300 text-green-700 font-bold text-sm rounded-2xl p-3 shadow-sm hover:bg-green-100 transition">
+                👶 คำนวณยาเด็กแบบละเอียด
+            </a>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- 1. Patient History -->
                 <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
@@ -1324,6 +1330,10 @@
         function setGender(gender) {
             currentGender = gender;
             updateTheme();
+
+            // ลิงก์คำนวณยาเด็กแบบละเอียด แสดงเฉพาะโหมดเด็ก
+            const pedBox = document.getElementById('ped-link-box');
+            if (pedBox) pedBox.style.display = (gender === 'child') ? 'block' : 'none';
             
             const buttons = document.querySelectorAll('.calc-sub-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
@@ -1395,7 +1405,7 @@
                 document.getElementById('abl-calc-text').innerText = 'ไม่สามารถคำนวณได้เนื่องจาก Hct Accept ≥ Hct ปัจจุบัน';
             }
 
-            renderDrugs(tbw, lbw);
+            renderDrugs(tbw, lbw, bmi);
         }
 
         function getDrugList() {
@@ -1416,14 +1426,15 @@
                 { name: 'Cisatracurium', doseMin: 0.15, doseMax: 0.2, unit: 'mg', defaultWeight: 'LBW', std: '0.15 - 0.2 mg/kg' },
 
                 { category: 'Emergency & Reversal' },
-                { name: 'Atropine', doseMin: 0.02, doseMax: 0.02, unit: 'mg', defaultWeight: 'TBW', std: '0.02 mg/kg', decimal: 2 },
-                { name: 'Neostigmine', doseMin: 0.05, doseMax: 0.05, unit: 'mg', defaultWeight: 'TBW', std: '0.05 mg/kg', decimal: 2 },
+                { name: 'Atropine', doseMin: 0.02, doseMax: 0.02, unit: 'mg', defaultWeight: 'TBW', std: '0.02 mg/kg (max 1.2 mg)', decimal: 2, maxDose: 1.2 },
+                { name: 'Neostigmine', doseMin: 0.05, doseMax: 0.05, unit: 'mg', defaultWeight: 'TBW', std: '0.05 mg/kg (max 2.5 mg)', decimal: 2, maxDose: 2.5 },
+                { name: 'Glycopyrrolate', doseMin: 0.01, doseMax: 0.01, unit: 'mg', defaultWeight: 'TBW', std: 'Glycopyrrolate 0.2 mg ต่อ neostigmine 1 mg หรือ 0.01 mg/kg IV (max 0.4 mg)', decimal: 2, maxDose: 0.4 },
 
                 { category: 'Other Medications' },
                 { name: 'Ondansetron', doseMin: 0.1, doseMax: 0.15, unit: 'mg', defaultWeight: 'TBW', std: '0.1 - 0.15 mg/kg' },
                 { name: 'Dexamethasone', doseMin: 0.1, doseMax: 0.2, unit: 'mg', defaultWeight: 'TBW', std: '0.1 - 0.2 mg/kg' },
                 { name: 'CPM', doseMin: 0.1, doseMax: 0.2, unit: 'mg', defaultWeight: 'TBW', std: '0.1 - 0.2 mg/kg' },
-                { name: 'Ketorolac', doseMin: 0.5, doseMax: 0.5, unit: 'mg', defaultWeight: 'TBW', std: '0.5 mg/kg' },
+                { name: 'Ketorolac', doseMin: 0.5, doseMax: 0.5, unit: 'mg', defaultWeight: 'TBW', std: '0.5 mg/kg (max 30 mg)', maxDose: 30 },
                 { name: 'Parecoxib', doseMin: 40, doseMax: 40, unit: 'mg', defaultWeight: 'Fixed', std: '40 mg IV single dose' },
 
                 { category: 'Local Anesthetics' },
@@ -1440,15 +1451,17 @@
             calculateAll();
         }
 
-        function renderDrugs(tbw, lbw) {
+        function renderDrugs(tbw, lbw, bmi) {
             const tbody = document.getElementById('drug-table-body');
+            // BMI < 30 : คำนวณยาตาม TBW ทุกตัว / BMI >= 30 : ใช้ค่า TBW/LBW ตามที่ตั้งไว้เดิม
+            const forceTBW = bmi > 0 && bmi < 30;
             let html = '';
             getDrugList().forEach(d => {
                 if (d.category) {
                     html += `<tr class="bg-slate-100 font-bold text-slate-700"><td colspan="3">${d.category}</td></tr>`;
                 } else {
                     if (!drugSelections[d.name]) drugSelections[d.name] = d.defaultWeight;
-                    let currentChoice = drugSelections[d.name];
+                    let currentChoice = forceTBW ? 'TBW' : drugSelections[d.name];
                     let activeWeightVal = (currentChoice === 'LBW') ? lbw : tbw;
                     let doseValText = '';
                     let stdText = d.std;
@@ -1461,6 +1474,10 @@
                     } else {
                         let minMg = activeWeightVal * d.doseMin;
                         let maxMg = activeWeightVal * d.doseMax;
+                        if (d.maxDose) {
+                            minMg = Math.min(minMg, d.maxDose);
+                            maxMg = Math.min(maxMg, d.maxDose);
+                        }
                         if (d.decimal === 2) {
                             doseValText = minMg.toFixed(2) === maxMg.toFixed(2) ? minMg.toFixed(2) : `${minMg.toFixed(2)} - ${maxMg.toFixed(2)}`;
                         } else if (d.type === 'lido1_exact5' || d.type === 'lidoAdr1_exact7') {
@@ -1475,9 +1492,14 @@
                         }
                     }
 
-                    let weightToggleHtml = (d.defaultWeight !== 'Fixed' && !(d.name === 'Parecoxib' && currentGender === 'child')) ? `<div class="weight-toggle-group"><div class="${currentChoice === 'TBW' ? 'weight-pill active-tbw' : 'weight-pill'}" onclick="setDrugWeight('${d.name}', 'TBW')">TBW</div><div class="${currentChoice === 'LBW' ? 'weight-pill active-lbw' : 'weight-pill'}" onclick="setDrugWeight('${d.name}', 'LBW')">LBW</div></div>` : '';
+                    const noToggle = (d.defaultWeight === 'Fixed') || (d.name === 'Parecoxib' && currentGender === 'child');
+                    const clickT = forceTBW ? '' : `onclick="setDrugWeight('${d.name}', 'TBW')"`;
+                    const clickL = forceTBW ? '' : `onclick="setDrugWeight('${d.name}', 'LBW')"`;
+                    let weightToggleHtml = noToggle ? '' : `<div class="weight-toggle-group"><div class="${currentChoice === 'TBW' ? 'weight-pill active-tbw' : 'weight-pill'}" ${clickT}>TBW</div><div class="${currentChoice === 'LBW' ? 'weight-pill active-lbw' : 'weight-pill'}" ${clickL}>LBW</div></div>`;
 
-                    html += `<tr><td><strong class="text-sm text-slate-800">${d.name}</strong>${weightToggleHtml}</td><td><div class="font-bold text-sky-600 text-base">${doseValText}</div><div class="text-xs text-slate-500 font-semibold">${d.name === 'Parecoxib' && currentGender === 'child' ? '' : d.unit}</div></td><td class="text-slate-500 text-xs">${stdText}</td></tr>`;
+                    const unitText = (d.name === 'Parecoxib' && currentGender === 'child') ? '' : d.unit;
+
+                    html += `<tr><td><strong class="text-sm text-slate-800">${d.name}</strong>${weightToggleHtml}</td><td><div class="font-bold text-sky-600 text-base">${doseValText}</div><div class="text-xs text-slate-500 font-semibold">${unitText}</div></td><td class="text-slate-500 text-xs">${stdText}</td></tr>`;
                 }
             });
             tbody.innerHTML = html;
