@@ -519,9 +519,12 @@
   <div class="row mode" id="r_mode"></div>
 </div>
 <div class="card">
-  <label class="t" style="margin-top:0">เลือกวันที่</label>
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <label class="t" style="margin:0">เลือกวันที่</label>
+    <button class="chip" id="r_todayBtn" type="button" title="กลับมาวันที่ปัจจุบัน" style="padding:4px 12px">🧸</button>
+  </div>
   <input type="hidden" id="r_date">
-  <div class="row" style="flex-wrap:nowrap"><select id="r_dd" style="flex:.8"></select><select id="r_dm" style="flex:1.6"></select><select id="r_dy" style="flex:1.1"></select></div>
+  <div class="row" style="flex-wrap:nowrap;margin-top:8px"><select id="r_dd" style="flex:.8"></select><select id="r_dm" style="flex:1.6"></select><select id="r_dy" style="flex:1.1"></select></div>
 </div>
 
 <!-- ในเวลาราชการ -->
@@ -1442,6 +1445,7 @@
                 { name: '2% Lidocaine', doseMin: 5, doseMax: 5, unit: 'cc', defaultWeight: 'TBW', std: '5 mg/kg', type: 'lido2_exact5' },
                 { name: '1% Lidocaine with ADR', doseMin: 7, doseMax: 7, unit: 'cc', defaultWeight: 'TBW', std: '7 mg/kg', type: 'lidoAdr1_exact7' },
                 { name: '2% Lidocaine with ADR', doseMin: 7, doseMax: 7, unit: 'cc', defaultWeight: 'TBW', std: '7 mg/kg', type: 'lidoAdr2_exact7' },
+                { name: '2% Lidocaine preservative free', doseMin: 1.5, doseMax: 1.5, unit: 'cc', defaultWeight: 'TBW', std: '1.5 mg/kg<br>for Blunt , Arrhythmia', type: 'lido2_exact5' },
                 { name: '0.5% Bupivacaine', doseMin: 2, doseMax: 2, unit: 'cc', defaultWeight: 'TBW', std: '2 mg/kg', type: 'bupi05_exact2' }
             ];
         }
@@ -1519,8 +1523,10 @@ const ls={get(k,d){try{const v=(localStorage.getItem("rpt_"+k)??localStorage.get
 let cases=ls.get("cases",{}),off=ls.get("off",{}),mode=ls.get("mode","in");
 let hist=Object.assign({comorb:[],diag:[],op:[],premed:[],ocase:[]},ls.get("hist",{}));
 let cur={room:null,sex:null,amn:false,oncall:false,nud:false},editId=null,os={status:null},oEdit=null;
-const t0=new Date();
-$("date").value=ls.get("date",`${t0.getFullYear()}-${pad(t0.getMonth()+1)}-${pad(t0.getDate())}`);
+const todayStr=()=>{const n=new Date();return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`};
+let lastToday=todayStr();
+/* เริ่มต้นที่วันปัจจุบันเสมอ (ไม่จำวันที่เลือกค้างจากครั้งก่อน) */
+$("date").value=lastToday;
 const dv=()=>$("date").value;
 const v=x=>x&&String(x).trim()?x:"-";
 function toast(t){let e=$("toast");if(!e){e=document.createElement("div");e.id="r_toast";e.style.cssText="position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#1d2733;color:#fff;padding:10px 18px;border-radius:999px;z-index:9;font-size:15px";document.body.appendChild(e)}e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2200)}
@@ -1538,6 +1544,20 @@ function setMode(m){mode=m;ls.set("mode",m);$("pIn").classList.toggle("rhide",m!
 function fillDays(s){const n=new Date(+$("dy").value,+$("dm").value,0).getDate(),ds=$("dd");ds.innerHTML="";for(let i=1;i<=n;i++)ds.add(new Option(i,i));ds.value=Math.min(s,n)}
 function syncDate(){const x=`${$("dy").value}-${pad($("dm").value)}-${pad($("dd").value)}`;$("date").value=x;ls.set("date",x);$("shareBox").classList.add("rhide");render()}
 (function(){const[y,m,d]=dv().split("-").map(Number);TM.forEach((n,i)=>$("dm").add(new Option(n,i+1)));for(let k=y-2;k<=y+3;k++)$("dy").add(new Option(k+543,k));$("dm").value=m;$("dy").value=y;fillDays(d);$("dd").onchange=syncDate;$("dm").onchange=$("dy").onchange=()=>{fillDays(+$("dd").value);syncDate()}})();
+
+/* 🧸 กลับมาวันที่ปัจจุบัน */
+function goToday(){
+  const n=new Date(),y=n.getFullYear(),m=n.getMonth()+1,d=n.getDate();
+  if(![...$("dy").options].some(o=>+o.value===y))$("dy").add(new Option(y+543,y));
+  $("dy").value=y;$("dm").value=m;fillDays(d);$("dd").value=d;
+  lastToday=todayStr();
+  syncDate();
+}
+$("todayBtn").onclick=()=>{goToday();toast("กลับมาวันที่ปัจจุบันแล้ว")};
+/* ถ้าเปิดแอปค้างไว้ข้ามเที่ยงคืน → อัพเดตเป็นวันปัจจุบันเมื่อกลับมาใช้งาน */
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible"&&todayStr()!==lastToday)goToday();
+});
 
 /* ในเวลาราชการ */
 function moveDays(s){const n=new Date(+$("my").value,+$("mm").value,0).getDate(),ds=$("md");ds.innerHTML="";for(let i=1;i<=n;i++)ds.add(new Option(i,i));ds.value=Math.min(s,n)}
