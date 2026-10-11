@@ -1812,3 +1812,145 @@ show();
 </script>
 </body>
 </html>
+<!-- ===== ธีมใหม่ (สไตล์แอปการเงิน: ครีม / เหลือง / เขียว LCD / ชมพู) =====
+     วางบล็อกนี้ทั้งก้อน "ก่อน </head>" ของไฟล์เดิม ไม่ต้องแก้โค้ดส่วนอื่นเลย -->
+<meta name="theme-color" content="#fdf3e3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai+Looping:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style id="app-theme-override">
+:root{
+  --t-cream:#fdf3e3; --t-cream2:#fff8ec; --t-navy:#23204a;
+  --t-yellow:#fcd877; --t-yellow-d:#8a6a14; --t-lcd:#c4e0b0; --t-lcd-tx:#14532d;
+  --t-pink:#fde3dc; --t-lav:#e4e2f4; --t-red:#e0302e; --t-green:#22b04b;
+  --t-mut:#8a8279; --t-line:#e8dcc6; --t-blue:#a9d8fb;
+  --t-font:'IBM Plex Sans Thai Looping','IBM Plex Sans Thai','Noto Sans Thai','Segoe UI',sans-serif;
+  --t-mono:'Space Mono','IBM Plex Mono',ui-monospace,monospace;
+}
+
+/* ---------- พื้นฐาน / ฟอนต์ ---------- */
+body#main-body{
+  background-color:var(--t-cream)!important;
+  background-image:radial-gradient(rgba(35,32,74,.07) 1px,transparent 1px);
+  background-size:14px 14px;
+  color:var(--t-navy);
+}
+body#main-body, body#main-body button, body#main-body input, body#main-body select,
+body#main-body textarea, body#main-body table, .calc-wrapper *{
+  font-family:var(--t-font)!important;
+}
+/* โทนสีหน้าคำนวณ (คงการสลับ เด็ก/ชาย/หญิง เดิม) */
+body#main-body.male{--primary-color:#3b9be0;--card-border:#bfdff7;background-color:#e9f4fd!important}
+body#main-body.female{--primary-color:#e0568f;--card-border:#f7c6d9;background-color:var(--t-pink)!important}
+body#main-body.child{--primary-color:#3fa357;--card-border:#cfe6bf;background-color:#eaf5df!important}
+
+/* สีข้อความ */
+body .text-slate-800,body .text-slate-700{color:var(--t-navy)!important}
+body .text-slate-600,body .text-slate-500,body .text-slate-400{color:var(--t-mut)!important}
+body .text-emerald-600{color:var(--t-green)!important}
+.calc-wrapper{color:var(--t-navy)}
+
+/* ---------- การ์ด: ขอบกรมท่า มุมโค้งมาก ---------- */
+body .rounded-2xl{border-radius:24px!important}
+body .bg-white.rounded-2xl{border:2px solid var(--t-navy)!important;box-shadow:none!important}
+body .shadow-sm,body .shadow-xs{box-shadow:none!important}
+body .shadow-xl{box-shadow:0 6px 0 rgba(35,32,74,.18)!important}
+body .bg-slate-50{background-color:var(--t-cream2)!important}
+body .bg-slate-100{background-color:#fff3d6!important}
+body .border-slate-200,body .border-slate-100,body .border-slate-300{border-color:var(--t-line)!important}
+body .bg-white.rounded-2xl .border-slate-200{border-color:var(--t-line)!important}
+
+/* ---------- แถบเมนูบน (เหมือนแถบล่างในภาพ) ---------- */
+#master-nav-container{
+  background:var(--t-cream2)!important;border:2px solid var(--t-navy);
+  border-radius:999px!important;box-shadow:none!important;padding:5px!important;
+}
+#master-nav-container button{border-radius:999px!important;color:var(--t-navy)!important;font-weight:700}
+#master-nav-container button.text-sky-700{
+  background:var(--t-yellow)!important;box-shadow:0 2px 0 var(--t-yellow-d)!important;
+}
+
+/* ---------- ปุ่มหลัก (เหลือง ขอบกรมท่า เงาแข็ง) ---------- */
+body .bg-sky-600{
+  background:var(--t-yellow)!important;color:var(--t-navy)!important;
+  border:2px solid var(--t-navy)!important;box-shadow:0 3px 0 var(--t-yellow-d)!important;
+}
+body .bg-sky-600:hover,body .hover\:bg-sky-700:hover{background:#f7cb55!important}
+body .text-white.bg-sky-600,body button.bg-sky-600.text-white{color:var(--t-navy)!important}
+body button.bg-sky-100{background:var(--t-yellow)!important;color:var(--t-navy)!important;border:2px solid var(--t-navy)}
+body .text-sky-600{color:#2f86c9!important}
+
+/* ---------- แถบสรุปรายได้ = กล่องเหลือง + จอ LCD เขียว ---------- */
+header.bg-white{
+  background:var(--t-yellow)!important;border:2px solid var(--t-yellow-d)!important;
+  box-shadow:0 5px 0 rgba(138,106,20,.35)!important;
+}
+header [class*="rounded-xl"]{
+  background:var(--t-lcd)!important;background-image:repeating-linear-gradient(0deg,rgba(20,83,45,.06) 0 1px,transparent 1px 3px)!important;
+  border:2px solid var(--t-navy)!important;box-shadow:none!important;
+}
+header [class*="rounded-xl"] *{color:var(--t-lcd-tx)!important}
+header .text-xs{letter-spacing:.1em;font-weight:600}
+#regular-income,#colo-income,#total-income,#preview-daily-total,
+.shift-subtotal-display,.calc-custom-input,#notif-badge{font-family:var(--t-mono)!important;font-weight:700}
+
+/* ---------- ปฏิทิน ---------- */
+#schedule-calendar-grid,#income-calendar-grid{background:var(--t-line)!important}
+body .bg-slate-100\/90{background-color:#fbf0dc!important}
+body .grid.bg-slate-100{background:#fff3d6!important;border-bottom:2px solid var(--t-navy)!important}
+body .text-rose-600{color:var(--t-red)!important}
+body .text-red-500{color:var(--t-red)!important}
+body .border-red-500{border-color:var(--t-red)!important}
+
+/* บล็อกรายได้ในช่องวัน: เลิก gradient ใช้สีเรียบ */
+body [class*="bg-gradient"]{background-image:none!important}
+body .from-amber-50{background-color:var(--t-yellow)!important;border-color:var(--t-yellow-d)!important}
+body .from-slate-100.via-slate-200{background-color:var(--t-lav)!important;border-color:#b9b5dc!important}
+body .from-emerald-50.via-emerald-100{background-color:var(--t-lcd)!important;border-color:#8fbf74!important}
+
+/* ยอดรวมของวัน = แบนเนอร์ชมพู */
+#preview-total-container{
+  background:var(--t-pink)!important;border:2px solid var(--t-navy)!important;border-radius:20px!important;
+}
+#preview-total-container *{color:var(--t-navy)!important}
+
+/* ---------- กระดิ่งแจ้งเตือน ---------- */
+body .fixed button.rounded-full{border:2px solid var(--t-navy)!important;background:var(--t-cream2)!important}
+#notif-panel{border:2px solid var(--t-navy)!important;border-radius:20px!important;box-shadow:0 6px 0 rgba(35,32,74,.18)!important;overflow-x:hidden}
+#notif-badge{background:var(--t-red)!important}
+
+/* ---------- Modal ---------- */
+#shift-modal{background:rgba(35,32,74,.45)!important}
+#shift-modal input[type=number],#shift-modal input[type=text]{
+  background:#fff;border:2px solid var(--t-line)!important;border-radius:10px!important;
+}
+#shift-modal input:focus{border-color:var(--t-navy)!important;outline:none}
+
+/* ---------- หน้าคำนวณ ---------- */
+.calc-sub-tabs{background:var(--t-cream2)!important;border:2px solid var(--t-navy)!important;box-shadow:none!important}
+.calc-sub-btn{color:var(--t-navy)!important}
+.calc-sub-btn.active{background:var(--t-yellow)!important;color:var(--t-navy)!important;box-shadow:0 2px 0 var(--t-yellow-d)!important}
+.calc-input-card-group{background:var(--t-cream2)!important;border:2px solid var(--t-line)!important;border-radius:16px!important}
+.calc-input-card-group:focus-within{border-color:var(--t-navy)!important;background:#fff!important;box-shadow:none!important}
+.calc-custom-input{color:var(--t-navy)!important}
+.calc-drug-table th{background:#fff3d6!important;color:var(--t-navy)!important}
+.calc-drug-table th,.calc-drug-table td{border-color:var(--t-line)!important}
+.calc-drug-table tr.bg-slate-100{background:var(--t-lav)!important}
+.calc-drug-table .text-sky-600{color:#2f86c9!important;font-family:var(--t-mono)!important}
+#ped-link-box{background:#eaf5df!important;border:2px solid var(--t-navy)!important;color:var(--t-lcd-tx)!important;border-radius:20px!important}
+
+/* ---------- หน้ารายงาน ---------- */
+#tab-content-report{
+  --r-bg:var(--t-cream2);--r-card:#fff;--r-tx:var(--t-navy);--r-mut:var(--t-mut);
+  --r-bd:var(--t-line);--r-pri:var(--t-yellow);--r-pt:var(--t-navy);font-family:var(--t-font);
+}
+#tab-content-report .card{border:2px solid var(--t-navy)!important;border-radius:24px!important}
+#tab-content-report .case{border-left:2px solid var(--t-navy)!important;border-left-width:8px!important;border-left-color:var(--t-yellow)!important}
+#tab-content-report input,#tab-content-report select,#tab-content-report textarea{border-width:2px!important;border-radius:12px!important}
+#tab-content-report input:focus,#tab-content-report select:focus,#tab-content-report textarea:focus{border-color:var(--t-navy)!important;outline:none}
+#tab-content-report .btn:not(.g){border:2px solid var(--t-navy);box-shadow:0 3px 0 var(--t-yellow-d)}
+#tab-content-report .btn.g{border:2px solid var(--t-navy)}
+#tab-content-report .chip{border-width:2px!important;border-color:var(--t-navy)!important;background:#fff}
+#tab-content-report .chip.on{background:var(--t-yellow)!important;color:var(--t-navy)!important;border-color:var(--t-navy)!important}
+#tab-content-report h1{font-weight:700}
+</style>
