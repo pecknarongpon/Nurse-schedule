@@ -1012,7 +1012,8 @@
                 cell.className = `${isWeekend ? 'bg-slate-100/90' : 'bg-white'} min-h-[90px] sm:min-h-[110px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
                 
                 // ดับเบิลคลิกเพื่อเข้าหน้า รายได้ และอัปเดต Tab ด้านบนให้เป็น 💵 รายได้ / 💊 คำนวณ
-                cell.ondblclick = () => switchTab('income');
+                cell.dataset.date = dateStr;
+                cell.ondblclick = () => { switchTab('income'); centerDate(dateStr); };
 
                 let shiftBadgesHtml = '', incomeBoxHtml = '';
                 if (dayData && dayData.shiftDetails) {
@@ -1087,7 +1088,8 @@
                 const cell = document.createElement('div');
                 
                 cell.className = `${isWeekend ? 'bg-slate-100/90' : 'bg-white'} min-h-[120px] sm:min-h-[140px] p-2 flex flex-col justify-between cursor-pointer hover:bg-slate-200/50 transition relative ${isToday ? 'border-2 border-red-500 rounded-lg shadow-sm z-10' : ''}`;
-                cell.ondblclick = () => openModal(dateStr);
+                cell.dataset.date = dateStr;
+                cell.ondblclick = () => { centerDate(dateStr); openModal(dateStr); };
                 
                 let shiftBadgesHtml = '', incomeBoxHtml = '';
                 if (dayData) {
@@ -1175,7 +1177,19 @@
         }
 
         function changeMonth(direction) { currentDate.setMonth(currentDate.getMonth() + direction); renderAll(); }
-        function goToCurrentMonth() { currentDate = new Date(); renderAll(); }
+        function centerDate(dateStr, smooth = true) {
+            const go = () => {
+                const gridId = activeTab === 'income' ? 'income-calendar-grid' : 'schedule-calendar-grid';
+                const el = document.querySelector('#' + gridId + ' [data-date="' + dateStr + '"]');
+                if (el) el.scrollIntoView({ block: 'center', inline: 'center', behavior: smooth ? 'smooth' : 'auto' });
+            };
+            requestAnimationFrame(() => requestAnimationFrame(go));
+        }
+        function todayDateStr() {
+            const t = new Date();
+            return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+        }
+        function goToCurrentMonth() { currentDate = new Date(); renderAll(); centerDate(todayDateStr()); }
 
         function openModal(dateStr) {
             selectedDateStr = dateStr;
@@ -1559,6 +1573,12 @@
         }
 
         initCalendar();
+        // เปิดไฟล์ขึ้นมา: เลื่อนวันที่ปัจจุบันมาอยู่กลางจอทันที
+        centerDate(todayDateStr(), false);
+        window.addEventListener('load', () => {
+            centerDate(todayDateStr(), false);
+            setTimeout(() => centerDate(todayDateStr(), false), 600); // เผื่อข้อมูล/เลย์เอาต์โหลดเสร็จช้า
+        });
     </script>
 <script>
 (function(){
