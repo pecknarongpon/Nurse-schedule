@@ -950,15 +950,15 @@
 
                 if (isColo) {
                     coloTotal += shiftIncome;
-                    if (activeM > 0) shiftLines.push(`Major x${activeM}`);
-                    if (activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
+                    if (shiftOt === 0 && activeM > 0) shiftLines.push(`Major x${activeM}`);
+                    if (shiftOt === 0 && activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
                     if (shiftOt > 0) shiftLines.push('OT');
                 } else {
                     regularTotal += shiftIncome;
                     if (isObs) shiftLines.push('Obs');
                     if (isOncall) shiftLines.push('oncall');
-                    if (activeM > 0) shiftLines.push(`Major x${activeM}`);
-                    if (activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
+                    if (shiftOt === 0 && activeM > 0) shiftLines.push(`Major x${activeM}`);
+                    if (shiftOt === 0 && activeMi > 0) shiftLines.push(`Minor x${activeMi}`);
                     if (shiftOt > 0) shiftLines.push('OT');
                 }
                 
