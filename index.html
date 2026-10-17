@@ -2075,3 +2075,55 @@ body#main-body:has(#tab-content-income:not(.hidden)) #income-bg{display:block}
   background-image:repeating-linear-gradient(0deg,rgba(35,32,74,.07) 0 1px,transparent 1px 4px)!important;
 }
 </style>
+<!-- ===== BG ลวดลาย minimal หน้าคำนวณ (CSS ล้วน) =====
+     วางต่อท้ายสุดของไฟล์ (หลังบล็อก modern-ui-layer) ไม่กระทบโค้ด/การคำนวณ
+     ใช้ได้เฉพาะตอนอยู่แท็บ 💊 คำนวณ (JS เดิมใส่ class child/male/female ที่ body อยู่แล้ว) -->
+<style id="calc-bg-patterns">
+/* ---------- 👶 เด็ก : เขียว — จุด + วงแหวนเล็ก ---------- */
+body#main-body.child{
+  background-color:#eaf5df!important;
+  background-image:
+    radial-gradient(60vmax 40vmax at 100% 0%,rgba(255,255,255,.75),transparent 60%),
+    radial-gradient(50vmax 40vmax at 0% 100%,rgba(190,225,160,.55),transparent 65%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Ccircle cx='14' cy='14' r='2.2' fill='%233fa357' fill-opacity='.20'/%3E%3Ccircle cx='42' cy='42' r='2.2' fill='%233fa357' fill-opacity='.20'/%3E%3Ccircle cx='42' cy='14' r='5' fill='none' stroke='%233fa357' stroke-opacity='.16' stroke-width='1.4'/%3E%3Cpath d='M12 40h8M16 36v8' stroke='%233fa357' stroke-opacity='.16' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E")!important;
+  background-attachment:fixed!important;
+}
+
+/* ---------- 👨 ผู้ชาย : ฟ้า — เส้นทแยงบาง + กากบาทเล็ก ---------- */
+body#main-body.male{
+  background-color:#e9f4fd!important;
+  background-image:
+    radial-gradient(60vmax 40vmax at 100% 0%,rgba(255,255,255,.8),transparent 60%),
+    radial-gradient(50vmax 40vmax at 0% 100%,rgba(170,212,246,.5),transparent 65%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M0 48L48 0' stroke='%233b9be0' stroke-opacity='.13' stroke-width='1'/%3E%3Cpath d='M30 12h8M34 8v8' stroke='%233b9be0' stroke-opacity='.22' stroke-width='1.4' stroke-linecap='round'/%3E%3Cpath d='M6 38h6' stroke='%233b9be0' stroke-opacity='.18' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E")!important;
+  background-attachment:fixed!important;
+}
+
+/* ---------- 👩 ผู้หญิง : ชมพู — หัวใจจิ๋ว + จุด ---------- */
+body#main-body.female{
+  background-color:#fdeaf1!important;
+  background-image:
+    radial-gradient(60vmax 40vmax at 100% 0%,rgba(255,255,255,.8),transparent 60%),
+    radial-gradient(50vmax 40vmax at 0% 100%,rgba(250,196,219,.55),transparent 65%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cpath d='M16 24c-7-5-4-10 0-7 4-3 7 2 0 7z' fill='%23e0568f' fill-opacity='.17'/%3E%3Cpath d='M48 56c-7-5-4-10 0-7 4-3 7 2 0 7z' fill='%23e0568f' fill-opacity='.17'/%3E%3Ccircle cx='48' cy='18' r='2' fill='%23e0568f' fill-opacity='.18'/%3E%3Ccircle cx='14' cy='50' r='1.6' fill='%23e0568f' fill-opacity='.18'/%3E%3C/svg%3E")!important;
+  background-attachment:fixed!important;
+}
+
+/* การ์ดบนหน้าคำนวณ: ให้ลายมองเห็นลอดผ่านนุ่ม ๆ และขอบเป็นโทนเดียวกับโหมด */
+body#main-body.child .calc-wrapper .bg-white.rounded-2xl,
+body#main-body.male .calc-wrapper .bg-white.rounded-2xl,
+body#main-body.female .calc-wrapper .bg-white.rounded-2xl{
+  background:rgba(255,255,255,.86)!important;
+  border-color:color-mix(in srgb,var(--primary-color) 28%,transparent)!important;
+}
+body#main-body.child  .calc-input-card-group:focus-within{border-color:#3fa357!important;box-shadow:0 0 0 4px rgba(63,163,87,.18)!important}
+body#main-body.male   .calc-input-card-group:focus-within{border-color:#3b9be0!important;box-shadow:0 0 0 4px rgba(59,155,224,.18)!important}
+body#main-body.female .calc-input-card-group:focus-within{border-color:#e0568f!important;box-shadow:0 0 0 4px rgba(224,86,143,.18)!important}
+
+/* โหมดมืดตามระบบ: ลดความสว่างของพื้นหลังลาย */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) body#main-body.child,
+  :root:not([data-theme="light"]) body#main-body.male,
+  :root:not([data-theme="light"]) body#main-body.female{background-blend-mode:multiply;filter:none}
+}
+</style>
