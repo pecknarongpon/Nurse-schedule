@@ -2075,55 +2075,254 @@ body#main-body:has(#tab-content-income:not(.hidden)) #income-bg{display:block}
   background-image:repeating-linear-gradient(0deg,rgba(35,32,74,.07) 0 1px,transparent 1px 4px)!important;
 }
 </style>
-<!-- ===== BG ลวดลาย minimal หน้าคำนวณ (CSS ล้วน) =====
-     วางต่อท้ายสุดของไฟล์ (หลังบล็อก modern-ui-layer) ไม่กระทบโค้ด/การคำนวณ
-     ใช้ได้เฉพาะตอนอยู่แท็บ 💊 คำนวณ (JS เดิมใส่ class child/male/female ที่ body อยู่แล้ว) -->
-<style id="calc-bg-patterns">
-/* ---------- 👶 เด็ก : เขียว — จุด + วงแหวนเล็ก ---------- */
-body#main-body.child{
-  background-color:#eaf5df!important;
-  background-image:
-    radial-gradient(60vmax 40vmax at 100% 0%,rgba(255,255,255,.75),transparent 60%),
-    radial-gradient(50vmax 40vmax at 0% 100%,rgba(190,225,160,.55),transparent 65%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Ccircle cx='14' cy='14' r='2.2' fill='%233fa357' fill-opacity='.20'/%3E%3Ccircle cx='42' cy='42' r='2.2' fill='%233fa357' fill-opacity='.20'/%3E%3Ccircle cx='42' cy='14' r='5' fill='none' stroke='%233fa357' stroke-opacity='.16' stroke-width='1.4'/%3E%3Cpath d='M12 40h8M16 36v8' stroke='%233fa357' stroke-opacity='.16' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E")!important;
-  background-attachment:fixed!important;
+<!-- ===== Modern UI Layer (CSS ล้วน — ไม่แตะ HTML/JS/การคำนวณ) =====
+     วางบล็อกนี้ "ต่อท้ายสุดของไฟล์" (หลังบล็อกธีมเดิมทั้งหมด) เพื่อให้ override ได้
+     ถ้าอยากกลับของเดิม แค่ลบบล็อกนี้ออก -->
+<meta name="theme-color" content="#f6f1e7">
+<style id="modern-ui-layer">
+:root{
+  --m-ink:#1e1b3a;
+  --m-ink-2:#5b5873;
+  --m-line:rgba(30,27,58,.09);
+  --m-card:rgba(255,255,255,.82);
+  --m-shadow-sm:0 1px 2px rgba(30,27,58,.05),0 4px 14px rgba(30,27,58,.05);
+  --m-shadow-md:0 2px 4px rgba(30,27,58,.05),0 12px 32px rgba(30,27,58,.09);
+  --m-accent:#f5c451;
+  --m-accent-d:#d9a521;
+  --m-radius:22px;
+  --m-ease:cubic-bezier(.2,.8,.2,1);
 }
 
-/* ---------- 👨 ผู้ชาย : ฟ้า — เส้นทแยงบาง + กากบาทเล็ก ---------- */
-body#main-body.male{
-  background-color:#e9f4fd!important;
-  background-image:
-    radial-gradient(60vmax 40vmax at 100% 0%,rgba(255,255,255,.8),transparent 60%),
-    radial-gradient(50vmax 40vmax at 0% 100%,rgba(170,212,246,.5),transparent 65%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M0 48L48 0' stroke='%233b9be0' stroke-opacity='.13' stroke-width='1'/%3E%3Cpath d='M30 12h8M34 8v8' stroke='%233b9be0' stroke-opacity='.22' stroke-width='1.4' stroke-linecap='round'/%3E%3Cpath d='M6 38h6' stroke='%233b9be0' stroke-opacity='.18' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E")!important;
-  background-attachment:fixed!important;
+/* ---------- พื้นฐาน ---------- */
+html{scroll-behavior:smooth}
+body#main-body{
+  color:var(--m-ink);
+  background-image:none;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:.005em;
+}
+body#main-body :focus-visible{outline:3px solid rgba(245,196,81,.55);outline-offset:2px}
+#regular-income,#colo-income,#total-income,#preview-daily-total,
+.shift-subtotal-display,.calc-custom-input{font-variant-numeric:tabular-nums}
+
+/* ---------- การ์ด: เส้นบาง เงานุ่ม โปร่งแสงเล็กน้อย ---------- */
+body .bg-white.rounded-2xl,
+#tab-content-report .card,
+.calc-wrapper .bg-white.rounded-2xl{
+  border:1px solid var(--m-line)!important;
+  background:var(--m-card)!important;
+  -webkit-backdrop-filter:saturate(1.4) blur(14px);
+  backdrop-filter:saturate(1.4) blur(14px);
+  box-shadow:var(--m-shadow-sm)!important;
+  border-radius:var(--m-radius)!important;
+}
+body .rounded-2xl{border-radius:var(--m-radius)!important}
+
+/* ---------- แถบเมนูบน: แคปซูลลอย ---------- */
+#master-nav-container{
+  background:rgba(255,255,255,.72)!important;
+  -webkit-backdrop-filter:saturate(1.6) blur(18px);
+  backdrop-filter:saturate(1.6) blur(18px);
+  border:1px solid var(--m-line)!important;
+  box-shadow:var(--m-shadow-md)!important;
+  padding:5px!important;gap:4px!important;
+}
+#master-nav-container button{
+  transition:background .25s var(--m-ease),transform .15s var(--m-ease),box-shadow .25s var(--m-ease);
+  font-weight:600;
+}
+#master-nav-container button:active{transform:scale(.96)}
+#master-nav-container button.text-sky-700{
+  background:linear-gradient(180deg,#ffe08a,var(--m-accent))!important;
+  box-shadow:0 2px 8px rgba(217,165,33,.35),inset 0 1px 0 rgba(255,255,255,.6)!important;
+  color:var(--m-ink)!important;
 }
 
-/* ---------- 👩 ผู้หญิง : ชมพู — หัวใจจิ๋ว + จุด ---------- */
-body#main-body.female{
-  background-color:#fdeaf1!important;
-  background-image:
-    radial-gradient(60vmax 40vmax at 100% 0%,rgba(255,255,255,.8),transparent 60%),
-    radial-gradient(50vmax 40vmax at 0% 100%,rgba(250,196,219,.55),transparent 65%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cpath d='M16 24c-7-5-4-10 0-7 4-3 7 2 0 7z' fill='%23e0568f' fill-opacity='.17'/%3E%3Cpath d='M48 56c-7-5-4-10 0-7 4-3 7 2 0 7z' fill='%23e0568f' fill-opacity='.17'/%3E%3Ccircle cx='48' cy='18' r='2' fill='%23e0568f' fill-opacity='.18'/%3E%3Ccircle cx='14' cy='50' r='1.6' fill='%23e0568f' fill-opacity='.18'/%3E%3C/svg%3E")!important;
-  background-attachment:fixed!important;
+/* ---------- ปุ่ม ---------- */
+body .bg-sky-600,
+#tab-content-report .btn:not(.g){
+  background:linear-gradient(180deg,#ffe08a,var(--m-accent))!important;
+  color:var(--m-ink)!important;
+  border:1px solid rgba(217,165,33,.55)!important;
+  box-shadow:0 2px 6px rgba(217,165,33,.28),inset 0 1px 0 rgba(255,255,255,.6)!important;
+  transition:transform .15s var(--m-ease),box-shadow .2s var(--m-ease),filter .2s;
+}
+body .bg-sky-600:hover,#tab-content-report .btn:not(.g):hover{filter:brightness(1.03);box-shadow:0 6px 16px rgba(217,165,33,.35),inset 0 1px 0 rgba(255,255,255,.6)!important}
+body .bg-sky-600:active,#tab-content-report .btn:not(.g):active{transform:translateY(1px) scale(.985)}
+#tab-content-report .btn.g,
+body button.bg-slate-100{
+  background:rgba(255,255,255,.7)!important;
+  border:1px solid var(--m-line)!important;
+  transition:background .2s,transform .15s var(--m-ease);
+}
+#tab-content-report .btn.g:hover,body button.bg-slate-100:hover{background:#fff!important}
+#tab-content-report .chip{
+  border:1px solid var(--m-line)!important;background:rgba(255,255,255,.8)!important;
+  transition:all .2s var(--m-ease);
+}
+#tab-content-report .chip:hover{transform:translateY(-1px)}
+#tab-content-report .chip.on{
+  background:linear-gradient(180deg,#ffe08a,var(--m-accent))!important;
+  border-color:rgba(217,165,33,.55)!important;
+  box-shadow:0 2px 8px rgba(217,165,33,.3);
+}
+body button.bg-sky-100{border:1px solid var(--m-line)!important;box-shadow:none!important}
+
+/* ---------- ช่องกรอก ---------- */
+#tab-content-report input,#tab-content-report select,#tab-content-report textarea,
+#shift-modal input[type=number],#shift-modal input[type=text]{
+  border:1px solid var(--m-line)!important;
+  background:rgba(255,255,255,.9)!important;
+  border-radius:14px!important;
+  transition:border-color .2s,box-shadow .2s;
+}
+#tab-content-report input:focus,#tab-content-report select:focus,#tab-content-report textarea:focus,
+#shift-modal input:focus{
+  border-color:var(--m-accent-d)!important;
+  box-shadow:0 0 0 4px rgba(245,196,81,.25)!important;
+  outline:none!important;
 }
 
-/* การ์ดบนหน้าคำนวณ: ให้ลายมองเห็นลอดผ่านนุ่ม ๆ และขอบเป็นโทนเดียวกับโหมด */
-body#main-body.child .calc-wrapper .bg-white.rounded-2xl,
-body#main-body.male .calc-wrapper .bg-white.rounded-2xl,
-body#main-body.female .calc-wrapper .bg-white.rounded-2xl{
-  background:rgba(255,255,255,.86)!important;
-  border-color:color-mix(in srgb,var(--primary-color) 28%,transparent)!important;
+/* ---------- ปฏิทิน ---------- */
+#schedule-calendar-grid,#income-calendar-grid{background:var(--m-line)!important;gap:1px!important}
+#schedule-calendar-grid > div,#income-calendar-grid > div{
+  transition:background-color .2s,box-shadow .2s,transform .2s var(--m-ease);
 }
-body#main-body.child  .calc-input-card-group:focus-within{border-color:#3fa357!important;box-shadow:0 0 0 4px rgba(63,163,87,.18)!important}
-body#main-body.male   .calc-input-card-group:focus-within{border-color:#3b9be0!important;box-shadow:0 0 0 4px rgba(59,155,224,.18)!important}
-body#main-body.female .calc-input-card-group:focus-within{border-color:#e0568f!important;box-shadow:0 0 0 4px rgba(224,86,143,.18)!important}
+#schedule-calendar-grid > div[data-date]:hover,
+#income-calendar-grid > div[data-date]:hover{
+  background-color:#fffdf6!important;
+  box-shadow:inset 0 0 0 1px rgba(245,196,81,.55);
+}
+body .grid.bg-slate-100{background:rgba(255,248,230,.9)!important;border-bottom:1px solid var(--m-line)!important}
+body .border-red-500{
+  border:2px solid #ef4444!important;
+  box-shadow:0 0 0 4px rgba(239,68,68,.12),0 6px 18px rgba(239,68,68,.18)!important;
+  border-radius:14px!important;
+}
+/* ป้ายเวรเป็นพิลล์ */
+#schedule-calendar-grid span[class*="border"],#income-calendar-grid span[class*="border"]{
+  border-radius:999px!important;padding:1px 8px!important;
+  box-shadow:0 1px 2px rgba(30,27,58,.06);
+}
+/* กล่องรายได้ในช่องวัน */
+#income-calendar-grid div[class*="bg-gradient"],#schedule-calendar-grid div[class*="bg-gradient"]{
+  border-radius:12px!important;border-width:1px!important;
+  box-shadow:0 1px 3px rgba(30,27,58,.07)!important;
+}
+#income-calendar-grid .border-t{border-color:rgba(30,27,58,.12)!important}
 
-/* โหมดมืดตามระบบ: ลดความสว่างของพื้นหลังลาย */
+/* ---------- สรุปรายได้ ---------- */
+#tab-content-income header.bg-white{
+  background:linear-gradient(160deg,rgba(255,250,235,.95),rgba(255,243,214,.9))!important;
+  border:1px solid rgba(217,165,33,.3)!important;
+  box-shadow:var(--m-shadow-md)!important;
+}
+#tab-content-income header .grid > div,
+#tab-content-income header > .bg-emerald-50{
+  border:1px solid var(--m-line)!important;
+  border-radius:18px!important;
+  box-shadow:0 1px 3px rgba(30,27,58,.05)!important;
+}
+#regular-income,#colo-income{font-size:1.35rem!important}
+#total-income{font-size:1.7rem!important}
+
+/* ---------- ตารางสรุป ---------- */
+#tab-content-income table thead tr{background:rgba(255,243,214,.7)!important}
+#tab-content-income table tbody tr{transition:background .15s}
+#tab-content-income table tbody tr:hover{background:rgba(255,248,230,.8)!important}
+
+/* ---------- กระดิ่ง + แผงแจ้งเตือน ---------- */
+body .fixed button.rounded-full{
+  border:1px solid var(--m-line)!important;
+  background:rgba(255,255,255,.85)!important;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:var(--m-shadow-md)!important;
+  transition:transform .2s var(--m-ease);
+}
+body .fixed button.rounded-full:active{transform:scale(.92)}
+#notif-panel{
+  border:1px solid var(--m-line)!important;border-radius:20px!important;
+  background:rgba(255,255,255,.92)!important;
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  box-shadow:0 20px 50px rgba(30,27,58,.18)!important;
+}
+
+/* ---------- Modal ---------- */
+#shift-modal{background:rgba(30,27,58,.38)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#shift-modal > div{
+  border-radius:28px!important;border:1px solid var(--m-line);
+  box-shadow:0 30px 80px rgba(30,27,58,.28)!important;
+  animation:m-pop .28s var(--m-ease);
+}
+@keyframes m-pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+#shift-modal label.flex{transition:transform .15s var(--m-ease),box-shadow .2s;border-radius:14px!important}
+#shift-modal label.flex:active{transform:scale(.97)}
+#preview-total-container{
+  background:linear-gradient(160deg,#fff1f3,#ffe3ea)!important;
+  border:1px solid rgba(225,90,120,.25)!important;border-radius:18px!important;
+}
+
+/* ---------- หน้าคำนวณ ---------- */
+.calc-sub-tabs{
+  background:rgba(255,255,255,.75)!important;border:1px solid var(--m-line)!important;
+  box-shadow:var(--m-shadow-sm)!important;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.calc-sub-btn{transition:all .25s var(--m-ease)}
+.calc-sub-btn.active{box-shadow:0 4px 12px rgba(30,27,58,.14)!important}
+.calc-input-card-group{
+  border:1px solid var(--m-line)!important;border-radius:18px!important;
+  background:rgba(255,255,255,.7)!important;transition:all .2s var(--m-ease);
+}
+.calc-input-card-group:focus-within{
+  border-color:var(--m-accent-d)!important;background:#fff!important;
+  box-shadow:0 0 0 4px rgba(245,196,81,.22)!important;
+}
+.calc-drug-table{border-collapse:separate!important;border-spacing:0}
+.calc-drug-table th,.calc-drug-table td{border:0!important;border-bottom:1px solid var(--m-line)!important}
+.calc-drug-table tbody tr{transition:background .15s}
+.calc-drug-table tbody tr:hover{background:rgba(255,248,230,.7)}
+.weight-pill{border-radius:999px!important;padding:2px 9px!important;transition:all .15s}
+.badge-metric{border-radius:999px!important}
+#ped-link-box{
+  border:1px solid rgba(63,163,87,.35)!important;
+  box-shadow:var(--m-shadow-sm)!important;
+  transition:transform .2s var(--m-ease),box-shadow .2s;
+}
+#ped-link-box:hover{transform:translateY(-2px);box-shadow:var(--m-shadow-md)!important}
+
+/* ---------- หน้ารายงาน ---------- */
+#tab-content-report .case{
+  border-left:none!important;position:relative;overflow:hidden;
+}
+#tab-content-report .case::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:linear-gradient(180deg,#ffe08a,var(--m-accent-d));
+}
+#tab-content-report .case .h{font-size:1.02em}
+#tab-content-report h1{letter-spacing:-.01em}
+#tab-content-report .acts button{border-radius:999px}
+
+/* ---------- เลื่อนนุ่ม + เคารพการตั้งค่าลดแอนิเมชัน ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* ---------- โหมดมืด (ตามระบบ) ---------- */
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]) body#main-body.child,
-  :root:not([data-theme="light"]) body#main-body.male,
-  :root:not([data-theme="light"]) body#main-body.female{background-blend-mode:multiply;filter:none}
+  :root:not([data-theme="light"]){
+    --m-ink:#f1eee6;--m-ink-2:#b9b5c9;--m-line:rgba(255,255,255,.1);
+    --m-card:rgba(30,28,48,.78);
+  }
+  :root:not([data-theme="light"]) body#main-body{background-color:#14122a!important;color:var(--m-ink)}
+  :root:not([data-theme="light"]) #master-nav-container{background:rgba(30,28,48,.8)!important}
+  :root:not([data-theme="light"]) #master-nav-container button{color:var(--m-ink)!important}
+  :root:not([data-theme="light"]) #master-nav-container button.text-sky-700{color:#1e1b3a!important}
+  :root:not([data-theme="light"]) .text-slate-800,
+  :root:not([data-theme="light"]) .text-slate-700{color:var(--m-ink)!important}
+  :root:not([data-theme="light"]) .bg-white:not(.fixed *):not(button){background:var(--m-card)!important}
+  :root:not([data-theme="light"]) #tab-content-report{--r-bg:#1c1a30;--r-card:#24213b;--r-tx:#f1eee6;--r-mut:#a9a5bd;--r-bd:rgba(255,255,255,.12)}
+  :root:not([data-theme="light"]) #schedule-calendar-grid > div,
+  :root:not([data-theme="light"]) #income-calendar-grid > div{background-color:#1f1c36!important}
 }
 </style>
