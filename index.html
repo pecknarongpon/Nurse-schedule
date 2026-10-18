@@ -2419,3 +2419,26 @@ body#main-body.female{
   tag();
 })();
 </script>
+
+<!-- ===== Patch: สีเวรในปฏิทิน (ตารางเวร + รายได้) ===== -->
+<style id="calendar-shift-color">
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc]{border-width:1px!important;border-style:solid!important;font-weight:600!important;box-shadow:none!important}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="ดึก"]{background:#c4c7d3!important;border-color:#8d92a3!important;color:#2f3345!important}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="เช้า"]{background:#bfe0f6!important;border-color:#8ec3e6!important;color:#1f4e72!important}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="บ่าย"]{background:#f7c3d6!important;border-color:#e98fb0!important;color:#7d2347!important}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="C"]{background:#d8d3ee!important;border-color:#b3acdb!important;color:#3b3566!important}
+</style>
+<script id="calendar-shift-color-js">
+(function(){
+  const names={'ดึก':1,'เช้า':1,'บ่าย':1,'C':1};
+  function tag(g){g.querySelectorAll('span').forEach(s=>{
+    const t=s.textContent.trim();
+    if(names[t]&&s.children.length===0&&s.className.indexOf('text-[10px]')>-1)s.setAttribute('data-sc',t);
+  });}
+  ['schedule-calendar-grid','income-calendar-grid'].forEach(id=>{
+    const g=document.getElementById(id);if(!g)return;
+    new MutationObserver(()=>tag(g)).observe(g,{childList:true,subtree:true});
+    tag(g);
+  });
+})();
+</script>
