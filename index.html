@@ -2326,3 +2326,96 @@ body .fixed button.rounded-full:active{transform:scale(.92)}
   :root:not([data-theme="light"]) #income-calendar-grid > div{background-color:#1f1c36!important}
 }
 </style>
+<!-- ===== Patch: สีประจำเวรในหน้ากรอกรายได้ + ลายพื้นหลังหน้าคำนวณ =====
+     วางบล็อกนี้ "ต่อท้ายสุดของไฟล์" (หลังบล็อก modern-ui-layer) ไม่ต้องแก้โค้ดเดิม -->
+<style id="shift-color-patch">
+/* ---------- 1) กรอบตัวเลือกเวรในหน้ากรอก (ช่องติ๊ก) ---------- */
+#shift-modal label:has(input[value="ดึก"]){
+  background:#c4c7d3!important;border-color:#8d92a3!important;
+}
+#shift-modal label:has(input[value="ดึก"]) span{color:#2f3345!important}
+#shift-modal label:has(input[value="ดึก"]):hover{background:#b9bdcb!important}
+
+#shift-modal label:has(input[value="Colonoscope"]){
+  background:#ddd9f1!important;border-color:#b3acdb!important;
+}
+#shift-modal label:has(input[value="Colonoscope"]) span{color:#3b3566!important}
+
+/* ---------- 2) การ์ดกรอกรายได้ของแต่ละเวร: ใช้ชุดสีเดียวกับเวรนั้น ---------- */
+#shift-incomes-container > div[data-shift]{
+  background:var(--sc-card)!important;
+  border:1px solid var(--sc-line)!important;
+}
+#shift-incomes-container > div[data-shift] > div:first-child{border-color:var(--sc-line)!important}
+#shift-incomes-container > div[data-shift] > div:first-child > span:first-child{
+  background:var(--sc-badge)!important;border-color:var(--sc-line)!important;color:var(--sc-ink)!important;
+}
+#shift-incomes-container > div[data-shift] .shift-subtotal-display{color:var(--sc-ink)!important}
+/* ช่อง Obs / On Call / Major / Minor */
+#shift-incomes-container > div[data-shift] .bg-slate-50{
+  background:var(--sc-field)!important;border-color:var(--sc-line)!important;
+}
+#shift-incomes-container > div[data-shift] .bg-slate-50 label,
+#shift-incomes-container > div[data-shift] .bg-slate-50 span{color:var(--sc-ink)!important}
+#shift-incomes-container > div[data-shift] input[type=number],
+#shift-incomes-container > div[data-shift] input[type=text]{
+  background:rgba(255,255,255,.85)!important;border-color:var(--sc-line)!important;
+}
+
+/* ชุดสีแต่ละเวร */
+#shift-incomes-container > div[data-shift="ดึก"]{
+  --sc-card:#d3d6df;--sc-field:#bfc3d0;--sc-line:#8d92a3;--sc-badge:#aeb3c3;--sc-ink:#2a2e40;
+}
+#shift-incomes-container > div[data-shift="เช้า"]{
+  --sc-card:#e3f1fc;--sc-field:#cde5f7;--sc-line:#9ccbea;--sc-badge:#bfe0f6;--sc-ink:#1f4e72;
+}
+#shift-incomes-container > div[data-shift="บ่าย"]{
+  --sc-card:#fde7ef;--sc-field:#f9d2e0;--sc-line:#efa7c0;--sc-badge:#f7c3d6;--sc-ink:#7d2347;
+}
+#shift-incomes-container > div[data-shift="Colonoscope"]{
+  --sc-card:#e9e6f6;--sc-field:#d8d3ee;--sc-line:#b3acdb;--sc-badge:#cbc5e8;--sc-ink:#3b3566;
+}
+#shift-incomes-container > div[data-shift="Off"]{
+  --sc-card:#e1f5e8;--sc-field:#c9ecd7;--sc-line:#8fd0a8;--sc-badge:#bfe8cf;--sc-ink:#1d5a3a;
+}
+#shift-incomes-container > div[data-shift="Vacation"]{
+  --sc-card:#cdeedc;--sc-field:#b3e0c6;--sc-line:#4fa77a;--sc-badge:#9fd8b8;--sc-ink:#134a30;
+}
+
+/* ---------- 3) ลายเส้น minimal พื้นหลังแท็บคำนวณ ---------- */
+/* เด็ก : จุดเล็กๆ สีเขียว */
+body#main-body.child{
+  background-image:radial-gradient(rgba(63,163,87,.22) 1.4px,transparent 1.6px)!important;
+  background-size:22px 22px!important;background-attachment:fixed!important;
+}
+/* ผู้ชาย : เส้นทแยงบางๆ สีฟ้า */
+body#main-body.male{
+  background-image:
+    linear-gradient(rgba(59,155,224,.14) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,155,224,.14) 1px,transparent 1px)!important;
+  background-size:28px 28px,28px 28px!important;
+  background-attachment:fixed!important;
+}
+/* ผู้หญิง : วงกลมเส้นบางๆ สีชมพู เรียงสลับ */
+body#main-body.female{
+  background-image:
+    radial-gradient(circle at 50% 50%,transparent 9px,rgba(224,86,143,.17) 9.5px,rgba(224,86,143,.17) 10.5px,transparent 11px),
+    radial-gradient(circle at 50% 50%,transparent 9px,rgba(224,86,143,.17) 9.5px,rgba(224,86,143,.17) 10.5px,transparent 11px)!important;
+  background-size:32px 32px,32px 32px!important;
+  background-position:0 0,16px 16px!important;
+  background-attachment:fixed!important;
+}
+</style>
+<script id="shift-color-patch-js">
+/* ใส่ data-shift ให้การ์ดแต่ละเวร เพื่อให้ CSS เลือกสีได้ (ไม่แตะฟังก์ชันเดิม) */
+(function(){
+  const box=document.getElementById('shift-incomes-container');
+  if(!box)return;
+  const tag=()=>box.querySelectorAll(':scope > div').forEach(d=>{
+    const b=d.querySelector('span');
+    if(b)d.dataset.shift=b.textContent.replace('เวร:','').trim();
+  });
+  new MutationObserver(tag).observe(box,{childList:true});
+  tag();
+})();
+</script>
