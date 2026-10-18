@@ -2331,15 +2331,15 @@ body .fixed button.rounded-full:active{transform:scale(.92)}
 <style id="shift-color-patch">
 /* ---------- 1) กรอบตัวเลือกเวรในหน้ากรอก (ช่องติ๊ก) ---------- */
 #shift-modal label:has(input[value="ดึก"]){
-  background:#c4c7d3!important;border-color:#8d92a3!important;
+  background:#e8eaf0!important;border-color:#d0d4de!important;
 }
-#shift-modal label:has(input[value="ดึก"]) span{color:#2f3345!important}
-#shift-modal label:has(input[value="ดึก"]):hover{background:#b9bdcb!important}
+#shift-modal label:has(input[value="ดึก"]) span{color:#4a4f63!important}
+#shift-modal label:has(input[value="ดึก"]):hover{background:#e2e5ec!important}
 
 #shift-modal label:has(input[value="Colonoscope"]){
-  background:#ddd9f1!important;border-color:#b3acdb!important;
+  background:#efecf9!important;border-color:#ddd8f0!important;
 }
-#shift-modal label:has(input[value="Colonoscope"]) span{color:#3b3566!important}
+#shift-modal label:has(input[value="Colonoscope"]) span{color:#5c5590!important}
 
 /* ---------- 2) การ์ดกรอกรายได้ของแต่ละเวร: ใช้ชุดสีเดียวกับเวรนั้น ---------- */
 #shift-incomes-container > div[data-shift]{
@@ -2364,22 +2364,22 @@ body .fixed button.rounded-full:active{transform:scale(.92)}
 
 /* ชุดสีแต่ละเวร */
 #shift-incomes-container > div[data-shift="ดึก"]{
-  --sc-card:#d3d6df;--sc-field:#bfc3d0;--sc-line:#8d92a3;--sc-badge:#aeb3c3;--sc-ink:#2a2e40;
+  --sc-card:#f0f1f5;--sc-field:#e6e8ee;--sc-line:#d0d4de;--sc-badge:#dfe2ea;--sc-ink:#4a4f63;
 }
 #shift-incomes-container > div[data-shift="เช้า"]{
-  --sc-card:#e3f1fc;--sc-field:#cde5f7;--sc-line:#9ccbea;--sc-badge:#bfe0f6;--sc-ink:#1f4e72;
+  --sc-card:#f6fafe;--sc-field:#ecf5fc;--sc-line:#d2e7f6;--sc-badge:#e1f0fa;--sc-ink:#3d6f96;
 }
 #shift-incomes-container > div[data-shift="บ่าย"]{
-  --sc-card:#fde7ef;--sc-field:#f9d2e0;--sc-line:#efa7c0;--sc-badge:#f7c3d6;--sc-ink:#7d2347;
+  --sc-card:#fff7f9;--sc-field:#fdeef3;--sc-line:#f7d3e0;--sc-badge:#fbe4ec;--sc-ink:#a24a69;
 }
 #shift-incomes-container > div[data-shift="Colonoscope"]{
-  --sc-card:#e9e6f6;--sc-field:#d8d3ee;--sc-line:#b3acdb;--sc-badge:#cbc5e8;--sc-ink:#3b3566;
+  --sc-card:#f7f6fc;--sc-field:#efecf9;--sc-line:#ddd8f0;--sc-badge:#e7e3f5;--sc-ink:#5c5590;
 }
 #shift-incomes-container > div[data-shift="Off"]{
-  --sc-card:#e1f5e8;--sc-field:#c9ecd7;--sc-line:#8fd0a8;--sc-badge:#bfe8cf;--sc-ink:#1d5a3a;
+  --sc-card:#f3fbf6;--sc-field:#e5f5ec;--sc-line:#cdeadb;--sc-badge:#dcf0e5;--sc-ink:#3b7d59;
 }
 #shift-incomes-container > div[data-shift="Vacation"]{
-  --sc-card:#cdeedc;--sc-field:#b3e0c6;--sc-line:#4fa77a;--sc-badge:#9fd8b8;--sc-ink:#134a30;
+  --sc-card:#e8f6ee;--sc-field:#d8efe2;--sc-line:#b0dcc3;--sc-badge:#cbe8d7;--sc-ink:#2c6a4b;
 }
 
 /* ---------- 3) ลายเส้น minimal พื้นหลังแท็บคำนวณ ---------- */
@@ -2423,10 +2423,10 @@ body#main-body.female{
 <!-- ===== Patch: สีเวรในปฏิทิน (ตารางเวร + รายได้) ===== -->
 <style id="calendar-shift-color">
 :is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc]{border-width:1px!important;border-style:solid!important;font-weight:600!important;box-shadow:none!important}
-:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="ดึก"]{background:#c4c7d3!important;border-color:#8d92a3!important;color:#2f3345!important}
-:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="เช้า"]{background:#bfe0f6!important;border-color:#8ec3e6!important;color:#1f4e72!important}
-:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="บ่าย"]{background:#f7c3d6!important;border-color:#e98fb0!important;color:#7d2347!important}
-:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="C"]{background:#d8d3ee!important;border-color:#b3acdb!important;color:#3b3566!important}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="ดึก"]{background:#e8eaf0!important;border-color:#d0d4de!important;color:#4a4f63!important}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="เช้า"]{background:#e4f1fb!important;border-color:#c8e1f4!important;color:#3d6f96!important}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="บ่าย"]{background:#fce7ef!important;border-color:#f6cddc!important;color:#a24a69!important}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="C"]{background:#eeebf8!important;border-color:#d9d4ee!important;color:#5c5590!important}
 </style>
 <script id="calendar-shift-color-js">
 (function(){
