@@ -2442,3 +2442,18 @@ body#main-body.female{
   });
 })();
 </script>
+<script id="hide-baht-in-calendar">
+(function(){
+  function strip(){
+    document.querySelectorAll('#income-calendar-grid .border-t').forEach(function(el){
+      if(el.textContent.indexOf('บาท')>-1){
+        el.textContent = el.textContent.replace(/\s*บาท/g,'').trim();
+      }
+    });
+  }
+  var g = document.getElementById('income-calendar-grid');
+  if(!g) return;
+  new MutationObserver(strip).observe(g,{childList:true,subtree:true});
+  strip();
+})();
+</script>
