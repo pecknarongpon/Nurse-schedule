@@ -1855,28 +1855,37 @@ ov.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;
 </script>
 <script>
 (function(){
-const ST='img',KEY='current';
+const ST='img';
+const KEYS={in:'in',out:'current'};
+const LABEL={in:'ในเวลาราชการ',out:'นอกเวลาราชการ'};
 const $=id=>document.getElementById('dr_'+id);
 const openDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('doctorRosterDB',1);r.onupgradeneeded=()=>r.result.createObjectStore(ST);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
 const db=(mode,fn)=>openDB().then(d=>new Promise((res,rej)=>{const t=d.transaction(ST,mode),q=fn(t.objectStore(ST));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)}));
 function compress(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();
  im.onload=()=>{const M=2400,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(),'image/jpeg',.88)};
  im.onerror=()=>{URL.revokeObjectURL(u);rej()};im.src=u})}
-let url=null;
+const curMode=()=>{const p=document.getElementById('r_pOut');return(p&&!p.classList.contains('rhide'))?'out':'in'};
+let url=null,seq=0,pendingMode='in';
 async function show(){
- let blob=null;try{blob=await db('readonly',s=>s.get(KEY))}catch(e){}
+ const m=curMode(),my=++seq;
+ let blob=null;try{blob=await db('readonly',s=>s.get(KEYS[m]))}catch(e){}
+ if(my!==seq)return;
  if(url){URL.revokeObjectURL(url);url=null}
  if(blob){url=URL.createObjectURL(blob);$('img').src=url}
+ $('img').alt='ตารางเวรแพทย์ '+LABEL[m];
+ $('btn').textContent='📷 อัพโหลดตารางเวรแพทย์ ('+LABEL[m]+')';
  $('btn').classList.toggle('rhide',!!blob);
  $('box').classList.toggle('rhide',!blob);
 }
-$('btn').onclick=()=>$('file').click();
+$('btn').onclick=()=>{pendingMode=curMode();$('file').click()};
 $('file').onchange=async e=>{
  const f=e.target.files[0];e.target.value='';if(!f)return;
- try{const blob=await compress(f);await db('readwrite',s=>s.put(blob,KEY));await show()}catch(err){alert('อัพโหลดรูปไม่สำเร็จ')}
+ try{const blob=await compress(f);await db('readwrite',s=>s.put(blob,KEYS[pendingMode]));await show()}catch(err){alert('อัพโหลดรูปไม่สำเร็จ')}
 };
-$('del').onclick=async()=>{if(!confirm('ลบรูปนี้?'))return;try{await db('readwrite',s=>s.delete(KEY))}catch(e){}await show()};
+$('del').onclick=async()=>{const m=curMode();if(!confirm('ลบรูปตารางเวรแพทย์ ('+LABEL[m]+') ?'))return;try{await db('readwrite',s=>s.delete(KEYS[m]))}catch(e){}await show()};
 $('img').onclick=()=>{if(url&&window.openImgViewer)window.openImgViewer(url)};
+const pOut=document.getElementById('r_pOut');
+if(pOut)new MutationObserver(show).observe(pOut,{attributes:true,attributeFilter:['class']});
 show();
 })();
 </script>
