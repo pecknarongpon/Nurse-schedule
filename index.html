@@ -2482,3 +2482,82 @@ body#main-body.female{
   text-shadow:0 1px 0 rgba(255,255,255,.55);
 }
 </style>
+<!-- ===== Patch: เพิ่มเวร R + จัดลำดับ =====
+     วางต่อท้ายสุดของไฟล์ (หลัง gold-total-patch) ถ้ามีบล็อก r-shift-patch เดิมให้ลบออกก่อน -->
+<style id="r-shift-patch">
+#shift-modal label:has(input[value="R"]){
+  background:#fef7fa!important;border-color:#f8dfe9!important;
+}
+#shift-modal label:has(input[value="R"]) span{color:#b9738f!important}
+#shift-modal label:has(input[value="R"]):hover{background:#fdeff4!important}
+#shift-incomes-container > div[data-shift="R"]{
+  --sc-card:#fffbfc;--sc-field:#fef4f8;--sc-line:#f8e0ea;--sc-badge:#fdeaf1;--sc-ink:#b9738f;
+}
+:is(#schedule-calendar-grid,#income-calendar-grid) span[data-sc="R"]{
+  background:#fef1f6!important;border-color:#f9dde8!important;color:#b9738f!important;
+}
+</style>
+<script id="r-shift-patch-js">
+(function(){
+  /* 1) ช่องติ๊ก R ต่อจาก บ่าย (ลำดับ: ดึก เช้า บ่าย R Colonoscope Off Vacation) */
+  var anchor=document.querySelector('input[name="shift-option"][value="บ่าย"]');
+  if(anchor && !document.querySelector('input[name="shift-option"][value="R"]')){
+    var lab=document.createElement('label');
+    lab.className='flex items-center gap-2 p-2.5 border rounded-lg cursor-pointer transition';
+    lab.innerHTML='<input type="checkbox" name="shift-option" value="R" onchange="handleShiftSelectionChange()" class="rounded"><span class="text-xs font-semibold">R</span>';
+    anchor.closest('label').after(lab);
+  }
+
+  /* 2) รายละเอียด : เวรทำการ นับ R เป็น "บ" */
+  var origAbbr=window.getShiftAbbr;
+  window.getShiftAbbr=function(s){
+    if(s==='R') return 'บ';
+    return origAbbr(s);
+  };
+
+  /* 3) ป้ายเวรในปฏิทิน: ใส่สี + จัดลำดับ ดึก เช้า บ่าย R C 🧑‍⚕️ 📞 */
+  function tag(g){
+    g.querySelectorAll('span').forEach(function(s){
+      if(s.children.length===0 && s.textContent.trim()==='R' && s.className.indexOf('text-[10px]')>-1){
+        s.setAttribute('data-sc','R');
+      }
+    });
+  }
+  function placeAfterMain(container, items, titleOf){
+    var r=null,last=null;
+    items.forEach(function(n){
+      var t=titleOf(n);
+      if(t==='R') r=n;
+      if(t==='ดึก'||t==='เช้า'||t==='บ่าย') last=n;
+    });
+    if(!r) return;
+    var target = last ? last.nextSibling : container.firstChild;
+    if(r===target) return;
+    container.insertBefore(r,target);
+  }
+  function reorder(g){
+    /* ป้ายเวร (ดึก/เช้า/บ่าย/R/C/Off/Vac + 🧑‍⚕️ 📞) */
+    g.querySelectorAll('div.flex-wrap').forEach(function(c){
+      var spans=[].slice.call(c.children).filter(function(n){return n.tagName==='SPAN'});
+      placeAfterMain(c,spans,function(n){return n.textContent.trim()});
+    });
+    /* กล่องรายได้ในหน้ารายได้ */
+    g.querySelectorAll('div.space-y-1').forEach(function(c){
+      var boxes=[].slice.call(c.children).filter(function(n){
+        return n.firstElementChild && n.firstElementChild.firstElementChild;
+      });
+      placeAfterMain(c,boxes,function(n){
+        return n.firstElementChild.firstElementChild.textContent.trim();
+      });
+    });
+  }
+  ['schedule-calendar-grid','income-calendar-grid'].forEach(function(id){
+    var g=document.getElementById(id);
+    if(!g) return;
+    new MutationObserver(function(){tag(g);reorder(g)}).observe(g,{childList:true,subtree:true});
+    tag(g);reorder(g);
+  });
+
+  if(typeof renderAll==='function') renderAll();
+})();
+</script>
