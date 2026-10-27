@@ -2561,3 +2561,74 @@ body#main-body.female{
   if(typeof renderAll==='function') renderAll();
 })();
 </script>
+<!-- ===== Patch: ห้ามบันทึก On call คู่กับ OT / Major / Minor (แจ้งเตือน popup) ===== -->
+<style id="oncall-rule-patch">
+#oncall-warn-overlay{
+  position:fixed;inset:0;z-index:99999;display:none;
+  align-items:center;justify-content:center;padding:20px;
+  background:rgba(30,27,58,.45);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+}
+#oncall-warn-overlay.show{display:flex}
+#oncall-warn-box{
+  width:100%;max-width:340px;text-align:center;
+  background:#fff;border-radius:28px;padding:28px 22px 22px;
+  border:1px solid rgba(225,90,120,.25);
+  box-shadow:0 30px 80px rgba(30,27,58,.3);
+  animation:oncall-pop .25s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes oncall-pop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+#oncall-warn-box .ow-icon{font-size:42px;line-height:1;margin-bottom:10px}
+#oncall-warn-box .ow-title{font-size:18px;font-weight:700;color:#be123c;margin-bottom:6px}
+#oncall-warn-box .ow-sub{font-size:14px;color:#5b5873;margin-bottom:2px}
+#oncall-warn-box .ow-key{font-size:17px;font-weight:700;color:#1e1b3a;margin:4px 0}
+#oncall-warn-box .ow-btn{
+  margin-top:18px;width:100%;padding:12px;border:0;border-radius:16px;
+  font-size:15px;font-weight:700;cursor:pointer;color:#1e1b3a;
+  background:linear-gradient(180deg,#ffe08a,#f5c451);
+  box-shadow:0 2px 8px rgba(217,165,33,.35);
+}
+#oncall-warn-box .ow-btn:active{transform:scale(.98)}
+</style>
+
+<script id="oncall-rule-patch-js">
+(function(){
+  /* สร้าง popup */
+  var ov=document.createElement('div');
+  ov.id='oncall-warn-overlay';
+  ov.innerHTML=
+    '<div id="oncall-warn-box">'+
+      '<div class="ow-icon">⚠️</div>'+
+      '<div class="ow-title">ไม่สามารถบันทึกข้อมูลได้</div>'+
+      '<div class="ow-sub">เนื่องจาก</div>'+
+      '<div class="ow-key">On call / OT</div>'+
+      '<div class="ow-sub">ไม่เข้าเงื่อนไข</div>'+
+      '<button type="button" class="ow-btn">ตกลง</button>'+
+    '</div>';
+  document.body.appendChild(ov);
+  function closeWarn(){ov.classList.remove('show')}
+  ov.querySelector('.ow-btn').onclick=closeWarn;
+  ov.addEventListener('click',function(e){if(e.target===ov)closeWarn()});
+
+  /* ตรวจเงื่อนไข: On call ห้ามคู่กับ Major / Minor (รวมถึง OT ที่เกิดจากการกรอก Major/Minor) */
+  function hasConflict(){
+    var list=gatherModalDetailsFromUI();
+    for(var i=0;i<list.length;i++){
+      var d=list[i];
+      if(d.shift==='Off'||d.shift==='Vacation')continue;
+      if(d.oncall && ((parseInt(d.major)||0)>0 || (parseInt(d.minor)||0)>0)) return true;
+    }
+    return false;
+  }
+
+  /* ครอบฟังก์ชันบันทึกเดิม: ถ้าไม่ผ่านเงื่อนไข → แจ้งเตือนและไม่บันทึก */
+  var origSave=window.saveShift;
+  window.saveShift=async function(){
+    if(hasConflict()){
+      ov.classList.add('show');
+      return;
+    }
+    return origSave.apply(this,arguments);
+  };
+})();
+</script>
