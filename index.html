@@ -2632,3 +2632,79 @@ body#main-body.female{
   };
 })();
 </script>
+<!-- ===== Patch: สีพื้นแต่ละห้อง + ลำดับ case ในห้อง ===== -->
+<style id="room-color-patch">
+/* สีพาสเทลประจำห้อง */
+#tab-content-report #r_list .case[data-room="1"]{--rc-bg:#eaf4fd;--rc-bar:#9fcdee;--rc-ink:#3d6f96}
+#tab-content-report #r_list .case[data-room="2"]{--rc-bg:#eaf7ef;--rc-bar:#a6dbbd;--rc-ink:#3b7d59}
+#tab-content-report #r_list .case[data-room="3"]{--rc-bg:#fdeff4;--rc-bar:#f4bdd0;--rc-ink:#a24a69}
+#tab-content-report #r_list .case[data-room="4"]{--rc-bg:#f2eefb;--rc-bar:#c9bdee;--rc-ink:#5c5590}
+
+#tab-content-report #r_list .case[data-room]{
+  background:var(--rc-bg)!important;
+  border:1px solid rgba(30,27,58,.07)!important;
+}
+#tab-content-report #r_list .case[data-room]::before{
+  background:var(--rc-bar)!important;
+}
+/* หัวข้อ - ห้อง 3 case ที่ 1 - */
+#tab-content-report #r_list .case .cn{
+  font-weight:700;
+  color:var(--rc-ink);
+  margin:2px 0 4px;
+}
+</style>
+
+<script id="room-case-number-patch-js">
+(function(){
+  /* 1) ใส่/อัปเดตเลข case ในการ์ด (นับตามลำดับที่เห็นบนจอ ในแต่ละห้อง)
+        ตอนลากสลับลำดับ DOM ขยับสด ตัวเลขจึงเปลี่ยนตามอัตโนมัติ */
+  var list=document.getElementById('r_list');
+  if(list){
+    var number=function(){
+      var cnt={};
+      list.querySelectorAll(':scope > .case').forEach(function(c){
+        var r=c.dataset.room;
+        if(!r) return;
+        cnt[r]=(cnt[r]||0)+1;
+        var txt='-  ห้อง '+r+' case ที่ '+cnt[r]+'  -';
+        var cn=c.querySelector(':scope > .cn');
+        if(!cn){
+          cn=document.createElement('div');
+          cn.className='cn';
+          var h=c.querySelector(':scope > .h');
+          if(h) h.after(cn); else c.prepend(cn);
+        }
+        if(cn.textContent!==txt) cn.textContent=txt;
+      });
+    };
+    new MutationObserver(number).observe(list,{childList:true,subtree:true});
+    number();
+  }
+
+  /* 2) ข้อความที่แชร์: ใส่ "-  ห้อง N case ที่ i  -" ก่อนแต่ละ case */
+  var sb=document.getElementById('r_shareBtn');
+  var out=document.getElementById('r_out');
+  if(sb && out){
+    sb.addEventListener('click',function(){
+      var t=out.value;
+      if(t.indexOf('ผู้ป่วยผ่าตัด')<0 || t.indexOf('📌 ห้อง')<0) return; /* เฉพาะโหมดในเวลาราชการ */
+      if(/ case ที่ \d/.test(t)) return;                                    /* กันใส่ซ้ำ */
+      var parts=t.split(/\n(?=📌 ห้อง \d)/);
+      var title=parts.shift().trim();
+      var rooms=parts.map(function(chunk){
+        var lines=chunk.split('\n');
+        var head=lines[0].trim();
+        var m=head.match(/ห้อง\s*(\d+)/);
+        var body=lines.slice(1).join('\n').trim();
+        if(!m || !body) return head;
+        var blocks=body.split(/\n[ \t]*\n/);
+        return head+'\n'+blocks.map(function(b,i){
+          return '-  ห้อง '+m[1]+' case ที่ '+(i+1)+'  -\n'+b.trim();
+        }).join('\n\n');
+      });
+      out.value=[title].concat(rooms).join('\n\n');
+    });
+  }
+})();
+</script>
