@@ -2708,3 +2708,136 @@ body#main-body.female{
   }
 })();
 </script>
+<!-- ===== Patch: เพิ่มเวร Note (ต่อจาก Vacation) โทนเทาอ่อน ===== -->
+<style id="note-shift-patch">
+/* ช่องติ๊กในหน้ากรอก */
+#shift-modal label:has(input[value="Note"]){
+  background:#f3f4f6!important;border-color:#e0e2e7!important;
+}
+#shift-modal label:has(input[value="Note"]) span{color:#6b7080!important}
+#shift-modal label:has(input[value="Note"]):hover{background:#eceef1!important}
+
+/* การ์ดกรอกข้อความ */
+#shift-incomes-container > div[data-shift="Note"]{
+  --sc-card:#f7f8fa;--sc-field:#eceef1;--sc-line:#dcdfe5;--sc-badge:#e8eaee;--sc-ink:#6b7080;
+}
+
+/* กล่องข้อความในปฏิทิน (แสดงเฉพาะข้อความที่พิมพ์) */
+:is(#schedule-calendar-grid,#income-calendar-grid) .note-box{
+  background:#f1f2f4;border:1px solid #dcdee3;color:#5f6370;
+  border-radius:12px;padding:6px 8px;font-size:10px;font-weight:600;line-height:1.35;
+  white-space:pre-line;overflow-wrap:anywhere;word-break:break-word;
+  box-shadow:0 1px 3px rgba(30,27,58,.06);margin-bottom:4px;
+}
+:is(#schedule-calendar-grid,#income-calendar-grid) .note-box:last-child{margin-bottom:0}
+</style>
+
+<script id="note-shift-patch-js">
+(function(){
+  var isNote=function(d){return d&&d.shift==='Note'};
+  var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')};
+
+  /* 1) เพิ่มช่องติ๊ก Note ต่อจาก Vacation */
+  var vac=document.querySelector('input[name="shift-option"][value="Vacation"]');
+  if(vac && !document.querySelector('input[name="shift-option"][value="Note"]')){
+    var lab=document.createElement('label');
+    lab.className='flex items-center gap-2 p-2.5 border rounded-lg cursor-pointer transition';
+    lab.innerHTML='<input type="checkbox" name="shift-option" value="Note" onchange="handleShiftSelectionChange()" class="rounded"><span class="text-xs font-semibold">Note</span>';
+    vac.closest('label').after(lab);
+  }
+
+  /* 2) การ์ดกรอกข้อความของเวร Note (กรอกได้เหมือน Off / Vacation) */
+  function makeCard(item){
+    var div=document.createElement('div');
+    div.className='p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs';
+    div.dataset.shift='Note';
+    div.innerHTML=
+      '<div class="flex items-center justify-between border-b border-slate-100 pb-1.5">'+
+        '<span class="text-xs font-bold px-2 py-0.5 rounded border bg-slate-100 text-slate-600 border-slate-300">เวร: Note</span>'+
+        '<span class="shift-subtotal-display" style="display:none"></span>'+
+      '</div>'+
+      '<div>'+
+        '<label class="block text-[10px] font-semibold mb-1" style="color:var(--sc-ink)">ข้อความ</label>'+
+        '<input type="text" data-field="note" value="'+esc(item.note)+'" placeholder="พิมพ์ข้อความ" class="w-full border border-slate-300 rounded p-1.5 text-xs focus:outline-none">'+
+      '</div>';
+    return div;
+  }
+
+  var origRender=window.renderShiftIncomeInputs;
+  window.renderShiftIncomeInputs=function(details){
+    details=details||[];
+    var notes=details.filter(isNote), rest=details.filter(function(d){return !isNote(d)});
+    origRender.call(this,rest);
+    if(!notes.length) return;
+    var box=document.getElementById('shift-incomes-container');
+    if(!rest.length) box.innerHTML='';
+    notes.forEach(function(n){box.appendChild(makeCard(n))});
+    if(typeof updatePreviewTotal==='function') updatePreviewTotal();
+  };
+
+  /* 3) เก็บค่าข้อความของ Note ตอนบันทึก */
+  var origGather=window.gatherModalDetailsFromUI;
+  window.gatherModalDetailsFromUI=function(){
+    var res=origGather.apply(this,arguments);
+    var inp=document.querySelector('#shift-incomes-container > div[data-shift="Note"] input[data-field="note"]');
+    return res.map(function(d){
+      return isNote(d)?{shift:'Note',note:inp?inp.value:''}:d;
+    });
+  };
+
+  /* 4) Note ไม่นับเป็นรายได้ / ไม่เข้าแจ้งเตือนค้างกรอก */
+  var origCalc=window.calculateDayDetails;
+  window.calculateDayDetails=function(data){
+    if(data && Array.isArray(data.shiftDetails) && data.shiftDetails.some(isNote)){
+      data=Object.assign({},data,{shiftDetails:data.shiftDetails.filter(function(d){return !isNote(d)})});
+    }
+    return origCalc.call(this,data);
+  };
+  var origPending=window.getPendingIncomeDates;
+  window.getPendingIncomeDates=function(){
+    return origPending.apply(this,arguments).filter(function(p){return p.shift!=='Note'});
+  };
+
+  /* 5) ปฏิทิน: ซ่อนป้ายคำว่า Note แล้วแสดงเฉพาะข้อความในกล่องเทา */
+  function addNotes(gridId,isIncome){
+    var g=document.getElementById(gridId); if(!g) return;
+    g.querySelectorAll(':scope > div[data-date]').forEach(function(cell){
+      var data=shiftsData[cell.dataset.date];
+      var items=(data&&data.shiftDetails)?data.shiftDetails.filter(isNote):[];
+      if(!items.length) return;
+      cell.querySelectorAll('span').forEach(function(s){
+        if(s.children.length===0 && s.textContent.trim()==='Note') s.remove();
+      });
+      var texts=items.map(function(d){return (d.note||'').trim()}).filter(Boolean);
+      if(!texts.length) return;
+      var host;
+      if(isIncome){
+        var wrap=cell.querySelector(':scope > div.mt-auto');
+        if(!wrap) return;
+        host=wrap.querySelector(':scope > div.space-y-1');
+        if(!host){host=document.createElement('div');host.className='space-y-1';wrap.appendChild(host)}
+      }else{
+        host=cell.querySelector(':scope > div.space-y-1');
+        if(!host){host=document.createElement('div');host.className='space-y-1 mt-auto';cell.appendChild(host)}
+      }
+      texts.forEach(function(t){
+        var b=document.createElement('div');
+        b.className='note-box';
+        b.textContent=t;
+        host.appendChild(b);
+      });
+    });
+  }
+  [['renderScheduleCalendar','schedule-calendar-grid',false],
+   ['renderIncomeCalendar','income-calendar-grid',true]].forEach(function(a){
+    var o=window[a[0]];
+    window[a[0]]=function(){
+      var r=o.apply(this,arguments);
+      addNotes(a[1],a[2]);
+      return r;
+    };
+  });
+
+  if(typeof renderAll==='function') renderAll();
+})();
+</script>
