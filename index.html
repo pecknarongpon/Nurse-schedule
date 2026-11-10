@@ -2842,3 +2842,44 @@ body#main-body.female{
   if(typeof renderAll==='function') renderAll();
 })();
 </script>
+<!-- ===== Patch: Tube เด็ก ปัดลง + แสดงค่าที่คำนวณได้จริงในวงเล็บ ===== -->
+<script id="tube-floor-patch-js">
+(function(){
+  /* 1) ปัดลงทีละ 0.5 */
+  window.roundTube = function(v){ return Math.floor(v * 2) / 2; };
+
+  /* 2) ซ่อน input เดิม แล้วใส่ div แสดงผลแทน (input ใส่ขนาดตัวอักษรหลายขนาดไม่ได้) */
+  var inp = document.getElementById('tube');
+  if(!inp) return;
+  var div = document.createElement('div');
+  div.id = 'tube-display';
+  div.className = inp.className;
+  inp.style.display = 'none';
+  inp.after(div);
+
+  function raw(v){ return parseFloat(v.toFixed(2)); }   // 6.25 -> 6.25, 6.5 -> 6.5
+  function small(v){
+    return '<span style="font-size:.6em;font-weight:600;color:#8a8279;margin-right:2px">(' + raw(v) + ')</span>';
+  }
+
+  /* 3) ครอบ calculateAll เดิม: คำนวณเสร็จแล้วค่อยเขียนข้อความใหม่ */
+  var orig = window.calculateAll;
+  window.calculateAll = function(){
+    var r = orig.apply(this, arguments);
+    if (typeof currentGender !== 'undefined' && currentGender === 'child') {
+      var age = parseFloat(document.getElementById('age').value) || 0;
+      var u = age / 4 + 4;      // uncuffed
+      var c = age / 4 + 3.5;    // cuffed
+      div.innerHTML =
+        'Uncuff: ' + small(u) + window.roundTube(u).toFixed(1) +
+        ' | Cuff: ' + small(c) + window.roundTube(c).toFixed(1);
+    } else {
+      div.textContent = inp.value;   // ผู้ชาย/ผู้หญิง แสดงเหมือนเดิม
+    }
+    return r;
+  };
+
+  window.calculateAll();
+})();
+</script>
+
